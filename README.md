@@ -22,13 +22,13 @@ We want to submit this project to Volatility Plugin Contest 2021
 ### ✔️ Prerequisites:
 
 ##### - Python 3 
-##### - Volatility 3
+##### - Volatility 3 as a python module
 
 Install on linux (Debian) using these commands:
 
 ```bash
 apt install python3
-git clone https://github.com/volatilityfoundation/volatility3.git
+pip3 install volatility3
 ```
 
 <br>
