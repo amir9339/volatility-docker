@@ -1,5 +1,6 @@
 # Project specific
 volatility3/
+volatility/
 memory_samples/*
 
 # Byte-compiled / optimized / DLL files
