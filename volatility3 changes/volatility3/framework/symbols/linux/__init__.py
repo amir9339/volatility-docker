@@ -1,261 +1,270 @@
 # This file is Copyright 2019 Volatility Foundation and licensed under the Volatility Software License 1.0
 # which is available at https://www.volatilityfoundation.org/license/vsl-v1.0
 #
+from typing import List, Tuple, Iterator
 
-import collections
-import collections.abc
-import enum
-import logging
-from typing import Any, Dict, Iterable, Iterator, TypeVar, List
-
-from volatility3.framework import constants, exceptions, interfaces, objects
-
-vollog = logging.getLogger(__name__)
-
-SymbolSpaceReturnType = TypeVar("SymbolSpaceReturnType", interfaces.objects.Template,
-                                interfaces.symbols.SymbolInterface, Dict[str, Any])
+from volatility3 import framework
+from volatility3.framework import exceptions, constants, interfaces, objects
+from volatility3.framework.objects import utility
+from volatility3.framework.symbols import intermed
+from volatility3.framework.symbols.linux import extensions
 
 
-class SymbolType(enum.Enum):
-    TYPE = 1
-    SYMBOL = 2
-    ENUM = 3
+class LinuxKernelIntermedSymbols(intermed.IntermediateSymbolTable):
+    provides = {"type": "interface"}
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+        # Set-up Linux specific types
+        self.set_type_class('file', extensions.struct_file)
+        self.set_type_class('list_head', extensions.list_head)
+        self.set_type_class('hlist_node', extensions.hlist_node)
+        self.set_type_class('mm_struct', extensions.mm_struct)
+        self.set_type_class('super_block', extensions.super_block)
+        self.set_type_class('task_struct', extensions.task_struct)
+        self.set_type_class('vm_area_struct', extensions.vm_area_struct)
+        self.set_type_class('qstr', extensions.qstr)
+        self.set_type_class('dentry', extensions.dentry)
+        self.set_type_class('fs_struct', extensions.fs_struct)
+        self.set_type_class('files_struct', extensions.files_struct)
+        self.set_type_class('vfsmount', extensions.vfsmount)
+        self.set_type_class('kobject', extensions.kobject)
+
+        if 'module' in self.types:
+            self.set_type_class('module', extensions.module)
+
+        if 'mount' in self.types:
+            self.set_type_class('mount', extensions.mount)
 
 
-class SymbolSpace(interfaces.symbols.SymbolSpaceInterface):
-    """Handles an ordered collection of SymbolTables.
+class LinuxUtilities(interfaces.configuration.VersionableInterface):
+    """Class with multiple useful linux functions."""
 
-    This collection is ordered so that resolution of symbols can proceed
-    down through the ranks if a namespace isn't specified.
-    """
+    _version = (2, 0, 0)
+    _required_framework_version = (2, 0, 0)
 
-    def __init__(self) -> None:
-        super().__init__()
-        self._dict: Dict[str, interfaces.symbols.BaseSymbolTableInterface] = collections.OrderedDict()
-        # Permanently cache all resolved symbols
-        self._resolved: Dict[str, interfaces.objects.Template] = {}
-        self._resolved_symbols: Dict[str, interfaces.objects.Template] = {}
+    framework.require_interface_version(*_required_framework_version)
 
-    def clear_symbol_cache(self, table_name: str = None) -> None:
-        """Clears the symbol cache for the specified table name. If no table
-        name is specified, the caches of all symbol tables are cleared."""
-        table_list: List[interfaces.symbols.BaseSymbolTableInterface] = list()
-        if table_name is None:
-            table_list = list(self._dict.values())
-        else:
-            table_list.append(self._dict[table_name])
-        for table in table_list:
-            table.clear_symbol_cache()
+    # based on __d_path from the Linux kernel
+    @classmethod
+    def _do_get_path(cls, rdentry, rmnt, dentry, vfsmnt) -> str:
 
-    def free_table_name(self, prefix: str = "layer") -> str:
-        """Returns an unused table name to ensure no collision occurs when
-        inserting a symbol table."""
-        count = 1
-        while prefix + str(count) in self:
-            count += 1
-        return prefix + str(count)
+        ret_path: List[str] = []
 
-    ### Symbol functions
+        while dentry != rdentry or vfsmnt != rmnt:
+            dname = dentry.path()
+            if dname == "":
+                break
 
-    def get_symbols_by_type(self, type_name: str) -> Iterable[str]:
-        """Returns all symbols based on the type of the symbol."""
-        for table in self._dict:
-            for symbol_name in self._dict[table].get_symbols_by_type(type_name):
-                yield table + constants.BANG + symbol_name
+            ret_path.insert(0, dname.strip('/'))
+            if dentry == vfsmnt.get_mnt_root() or dentry == dentry.d_parent:
+                if vfsmnt.get_mnt_parent() == vfsmnt:
+                    break
 
-    def get_symbols_by_location(self, offset: int, size: int = 0, table_name: str = None) -> Iterable[str]:
-        """Returns all symbols that exist at a specific relative address."""
-        table_list: Iterable[interfaces.symbols.BaseSymbolTableInterface] = self._dict.values()
-        if table_name is not None:
-            if table_name in self._dict:
-                table_list = [self._dict[table_name]]
+                dentry = vfsmnt.get_mnt_mountpoint()
+                vfsmnt = vfsmnt.get_mnt_parent()
+
+                continue
+
+            parent = dentry.d_parent
+            dentry = parent
+
+        # if we did not gather any valid dentrys in the path, then the entire file is
+        # either 1) smeared out of memory or 2) de-allocated and corresponding structures overwritten
+        # we return an empty string in this case to avoid confusion with something like a handle to the root
+        # directory (e.g., "/")
+        if not ret_path:
+            return ""
+
+        ret_val = '/'.join([str(p) for p in ret_path if p != ""])
+
+        if ret_val.startswith(("socket:", "pipe:")):
+            if ret_val.find("]") == -1:
+                try:
+                    inode = dentry.d_inode
+                    ino = inode.i_ino
+                except exceptions.InvalidAddressException:
+                    ino = 0
+
+                ret_val = ret_val[:-1] + f":[{ino}]"
             else:
-                table_list = []
-        for table in table_list:
-            for symbol_name in table.get_symbols_by_location(offset = offset, size = size):
-                yield table.name + constants.BANG + symbol_name
+                ret_val = ret_val.replace("/", "")
 
-    ### Space functions
+        elif ret_val != "inotify":
+            ret_val = '/' + ret_val
 
-    def __len__(self) -> int:
-        """Returns the number of tables within the space."""
-        return len(self._dict)
+        return ret_val
 
-    def __getitem__(self, i: str) -> Any:
-        """Returns a specific table from the space."""
-        return self._dict[i]
+    # method used by 'older' kernels
+    # TODO: lookup when dentry_operations->d_name was merged into the mainline kernel for exact version
+    @classmethod
+    def _get_path_file(cls, task, filp) -> str:
+        rdentry = task.fs.get_root_dentry()
+        rmnt = task.fs.get_root_mnt()
+        dentry = filp.get_dentry()
+        vfsmnt = filp.get_vfsmnt()
 
-    def __iter__(self) -> Iterator[str]:
-        """Iterates through all available tables in the symbol space."""
-        return iter(self._dict)
+        return LinuxUtilities._do_get_path(rdentry, rmnt, dentry, vfsmnt)
 
-    def append(self, value: interfaces.symbols.BaseSymbolTableInterface) -> None:
-        """Adds a symbol_list to the end of the space."""
-        if not isinstance(value, interfaces.symbols.BaseSymbolTableInterface):
-            raise TypeError(value)
-        if value.name in self._dict:
-            self.remove(value.name)
-        self._dict[value.name] = value
+    @classmethod
+    def _get_new_sock_pipe_path(cls, context, task, filp) -> str:
+        dentry = filp.get_dentry()
 
-    def remove(self, key: str) -> None:
-        """Removes a named symbol_list from the space."""
-        # Reset the resolved list, since we're removing some symbols
-        self._resolved = {}
-        del self._dict[key]
+        sym_addr = dentry.d_op.d_dname
 
-    ### Resolution functions
+        symbol_table_arr = sym_addr.vol.type_name.split("!")
+        symbol_table = None
+        if len(symbol_table_arr) == 2:
+            symbol_table = symbol_table_arr[0]
 
-    class UnresolvedTemplate(objects.templates.ReferenceTemplate):
-        """Class to highlight when missing symbols are present.
+        for module_name in context.modules.get_modules_by_symbol_tables(symbol_table):
+            kernel_module = context.modules[module_name]
+            break
+        else:
+            raise ValueError(f"No module using the symbol table {symbol_table}")
 
-        This class is identical to a reference template, but differentiable by its classname.
-        It will output a debug log to indicate when it has been instantiated and with what name.
+        symbs = list(kernel_module.get_symbols_by_absolute_location(sym_addr))
 
-        This class is designed to be output ONLY as part of the SymbolSpace resolution system.
-        Individual SymbolTables that cannot resolve a symbol should still return a SymbolError to
-        indicate this failure in resolution.
+        if len(symbs) == 1:
+            sym = symbs[0].split(constants.BANG)[1]
+
+            if sym == "sockfs_dname":
+                pre_name = "socket"
+
+            elif sym == "anon_inodefs_dname":
+                pre_name = "anon_inode"
+
+            elif sym == "pipefs_dname":
+                pre_name = "pipe"
+
+            elif sym == "simple_dname":
+                pre_name = cls._get_path_file(task, filp)
+
+            else:
+                pre_name = f"<unsupported d_op symbol: {sym}>"
+
+            ret = f"{pre_name}:[{dentry.d_inode.i_ino:d}]"
+
+        else:
+            ret = f"<invalid d_dname pointer> {sym_addr:x}"
+
+        return ret
+
+    # a 'file' structure doesn't have enough information to properly restore its full path
+    # we need the root mount information from task_struct to determine this
+    @classmethod
+    def path_for_file(cls, context, task, filp) -> str:
+        try:
+            dentry = filp.get_dentry()
+        except exceptions.InvalidAddressException:
+            return ""
+
+        if dentry == 0:
+            return ""
+
+        dname_is_valid = False
+
+        # TODO COMPARE THIS IN LSOF OUTPUT TO VOL2
+        try:
+            if dentry.d_op and dentry.d_op.has_member("d_dname") and dentry.d_op.d_dname:
+                dname_is_valid = True
+
+        except exceptions.InvalidAddressException:
+            dname_is_valid = False
+
+        if dname_is_valid:
+            ret = LinuxUtilities._get_new_sock_pipe_path(context, task, filp)
+        else:
+            ret = LinuxUtilities._get_path_file(task, filp)
+
+        return ret
+
+    @classmethod
+    def files_descriptors_for_process(cls, context: interfaces.context.ContextInterface, symbol_table: str,
+                                      task: interfaces.objects.ObjectInterface):
+
+        fd_table = task.files.get_fds()
+        if fd_table == 0:
+            return
+
+        max_fds = task.files.get_max_fds()
+
+        # corruption check
+        if max_fds > 500000:
+            return
+
+        file_type = symbol_table + constants.BANG + 'file'
+
+        fds = objects.utility.array_of_pointers(fd_table, count = max_fds, subtype = file_type, context = context)
+
+        for (fd_num, filp) in enumerate(fds):
+            if filp != 0:
+                full_path = LinuxUtilities.path_for_file(context, task, filp)
+
+                yield fd_num, filp, full_path
+
+    @classmethod
+    def mask_mods_list(cls, context: interfaces.context.ContextInterface, layer_name: str,
+                       mods: Iterator[interfaces.objects.ObjectInterface]) -> List[Tuple[str, int, int]]:
+        """
+        A helper function to mask the starting and end address of kernel modules
+        """
+        mask = context.layers[layer_name].address_mask
+
+        return [(utility.array_to_string(mod.name), mod.get_module_base() & mask,
+                 (mod.get_module_base() & mask) + mod.get_core_size()) for mod in mods]
+
+    @classmethod
+    def generate_kernel_handler_info(
+            cls, context: interfaces.context.ContextInterface, kernel_module_name: str,
+            mods_list: Iterator[interfaces.objects.ObjectInterface]) -> List[Tuple[str, int, int]]:
+        """
+        A helper function that gets the beginning and end address of the kernel module
         """
 
-        def __init__(self, type_name: str, **kwargs) -> None:
-            vollog.debug(f"Unresolved reference: {type_name}")
-            super().__init__(type_name = type_name, **kwargs)
+        kernel = context.modules[kernel_module_name]
 
-    def _weak_resolve(self, resolve_type: SymbolType, name: str) -> SymbolSpaceReturnType:
-        """Takes a symbol name and resolves it with ReferentialTemplates."""
-        if resolve_type == SymbolType.TYPE:
-            get_function = 'get_type'
-        elif resolve_type == SymbolType.SYMBOL:
-            get_function = 'get_symbol'
-        elif resolve_type == SymbolType.ENUM:
-            get_function = 'get_enumeration'
-        else:
-            raise TypeError("Weak_resolve called without a proper SymbolType")
+        mask = context.layers[kernel.layer_name].address_mask
 
-        name_array = name.split(constants.BANG)
-        if len(name_array) == 2:
-            table_name = name_array[0]
-            component_name = name_array[1]
-            try:
-                return getattr(self._dict[table_name], get_function)(component_name)
-            except KeyError as e:
-                raise exceptions.SymbolError(component_name, table_name,
-                                             f'Type {name} references missing Type/Symbol/Enum: {e}')
-        raise exceptions.SymbolError(name, None, f"Malformed name: {name}")
+        start_addr = kernel.object_from_symbol("_text")
+        start_addr = start_addr.vol.offset & mask
 
-    def _iterative_resolve(self, traverse_list):
-        """Iteratively resolves a type, populating linked child
-        ReferenceTemplates with their properly resolved counterparts."""
-        replacements = set()
-        # Whole Symbols that still need traversing
-        while traverse_list:
-            template_traverse_list, traverse_list = [self._resolved[traverse_list[0]]], traverse_list[1:]
-            # Traverse a single symbol looking for any ReferenceTemplate objects
-            while template_traverse_list:
-                traverser, template_traverse_list = template_traverse_list[0], template_traverse_list[1:]
-                for child in traverser.children:
-                    if isinstance(child, objects.templates.ReferenceTemplate):
-                        # If we haven't seen it before, subresolve it and also add it
-                        # to the "symbols that still need traversing" list
-                        if child.vol.type_name not in self._resolved:
-                            traverse_list.append(child.vol.type_name)
-                            try:
-                                self._resolved[child.vol.type_name] = self._weak_resolve(
-                                    SymbolType.TYPE, child.vol.type_name)
-                            except exceptions.SymbolError:
-                                self._resolved[child.vol.type_name] = self.UnresolvedTemplate(child.vol.type_name)
-                        # Stash the replacement
-                        replacements.add((traverser, child))
-                    elif child.children:
-                        template_traverse_list.append(child)
-        for (parent, child) in replacements:
-            parent.replace_child(child, self._resolved[child.vol.type_name])
+        end_addr = kernel.object_from_symbol("_etext")
+        end_addr = end_addr.vol.offset & mask
 
-    def get_type(self, type_name: str) -> interfaces.objects.Template:
-        """Takes a symbol name and resolves it.
+        return [(constants.linux.KERNEL_NAME, start_addr, end_addr)] + \
+               LinuxUtilities.mask_mods_list(context, kernel.layer_name, mods_list)
 
-        This method ensures that all referenced templates (including
-        self-referential templates) are satisfied as ObjectTemplates
+    @classmethod
+    def lookup_module_address(cls, kernel_module: interfaces.context.ModuleInterface,
+                              handlers: List[Tuple[str, int, int]],
+                              target_address: int):
         """
-        # Traverse down any resolutions
-        if type_name not in self._resolved:
-            self._resolved[type_name] = self._weak_resolve(SymbolType.TYPE, type_name)  # type: ignore
-            self._iterative_resolve([type_name])
-        if isinstance(self._resolved[type_name], objects.templates.ReferenceTemplate):
-            table_name = None
-            index = type_name.find(constants.BANG)
-            if index > 0:
-                table_name, type_name = type_name[:index], type_name[index + 1:]
-            raise exceptions.SymbolError(type_name, table_name, f"Unresolvable symbol requested: {type_name}")
-        return self._resolved[type_name]
+        Searches between the start and end address of the kernel module using target_address.
+        Returns the module and symbol name of the address provided.
+        """
 
-    def get_symbol(self, symbol_name: str) -> interfaces.symbols.SymbolInterface:
-        """Look-up a symbol name across all the contained symbol spaces."""
-        retval = self._weak_resolve(SymbolType.SYMBOL, symbol_name)
-        if symbol_name not in self._resolved_symbols and retval.type is not None:
-            self._resolved_symbols[symbol_name] = self._subresolve(retval.type)
-        if not isinstance(retval, interfaces.symbols.SymbolInterface):
-            table_name = None
-            index = symbol_name.find(constants.BANG)
-            if index > 0:
-                table_name, symbol_name = symbol_name[:index], symbol_name[index + 1:]
-            raise exceptions.SymbolError(symbol_name, table_name, f"Unresolvable Symbol: {symbol_name}")
-        return retval
+        mod_name = "UNKNOWN"
+        symbol_name = "N/A"
 
-    def _subresolve(self, object_template: interfaces.objects.Template) -> interfaces.objects.Template:
-        """Ensure an ObjectTemplate doesn't contain any ReferenceTemplates"""
-        for child in object_template.children:
-            if isinstance(child, objects.templates.ReferenceTemplate):
-                new_child = self.get_type(child.vol.type_name)
-            else:
-                new_child = self._subresolve(child)
-            object_template.replace_child(old_child = child, new_child = new_child)
-        return object_template
+        for name, start, end in handlers:
+            if start <= target_address <= end:
+                mod_name = name
+                if name == constants.linux.KERNEL_NAME:
+                    symbols = list(kernel_module.get_symbols_by_absolute_location(target_address))
 
-    def get_enumeration(self, enum_name: str) -> interfaces.objects.Template:
-        """Look-up a set of enumeration choices from a specific symbol
-        table."""
-        retval = self._weak_resolve(SymbolType.ENUM, enum_name)
-        if not isinstance(retval, interfaces.objects.Template):
-            table_name = None
-            index = enum_name.find(constants.BANG)
-            if index > 0:
-                table_name, enum_name = enum_name[:index], enum_name[index + 1:]
-            raise exceptions.SymbolError(enum_name, table_name, f"Unresolvable Enumeration: {enum_name}")
-        return retval
+                    if len(symbols):
+                        symbol_name = symbols[0].split(constants.BANG)[1] if constants.BANG in symbols[0] else \
+                            symbols[0]
 
-    def _membership(self, member_type: SymbolType, name: str) -> bool:
-        """Test for membership of a component within a table."""
+                break
 
-        name_array = name.split(constants.BANG)
-        if len(name_array) == 2:
-            table_name = name_array[0]
-            component_name = name_array[1]
-        else:
-            return False
+        return mod_name, symbol_name
 
-        if table_name not in self:
-            return False
-        table = self[table_name]
-
-        if member_type == SymbolType.TYPE:
-            return component_name in table.types
-        elif member_type == SymbolType.SYMBOL:
-            return component_name in table.symbols
-        elif member_type == SymbolType.ENUM:
-            return component_name in table.enumerations
-        return False
-
-    def has_type(self, name: str) -> bool:
-        return self._membership(SymbolType.TYPE, name)
-
-    def has_symbol(self, name: str) -> bool:
-        return self._membership(SymbolType.SYMBOL, name)
-
-    def has_enumeration(self, name: str) -> bool:
-        return self._membership(SymbolType.ENUM, name)
-
-
-def symbol_table_is_64bit(context: interfaces.context.ContextInterface, symbol_table_name: str) -> bool:
-    """Returns a boolean as to whether a particular symbol table within a
-    context is 64-bit or not."""
-    return context.symbol_space.get_type(symbol_table_name + constants.BANG + "pointer").size == 8
+    @classmethod
+    def walk_internal_list(cls, vmlinux, struct_name, list_member, list_start):
+        while list_start:
+            list_struct = vmlinux.object(object_type = struct_name, offset = list_start.vol.offset)
+            yield list_struct
+            list_start = getattr(list_struct, list_member)
