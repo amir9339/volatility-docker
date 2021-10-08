@@ -453,7 +453,7 @@ class hlist_node(objects.StructType, collections.abc.Iterable):
                 symbol_type: str,
                 member: str,
                 forward: bool = True,
-                sentinel: bool = True,
+                sentinel: bool = False,
                 layer: Optional[str] = None) -> Iterator[interfaces.objects.ObjectInterface]:
         """Returns an iterator of the entries in the list.
 
@@ -484,7 +484,7 @@ class hlist_node(objects.StructType, collections.abc.Iterable):
             yield self._context.object(symbol_type, layer, offset = self.vol.offset - relative_offset)
 
         seen = {self.vol.offset}
-        while link.vol.offset not in seen:
+        while link.vol.offset != 0 and link.vol.offset not in seen:
 
             obj = self._context.object(symbol_type, layer, offset = link.vol.offset - relative_offset)
             yield obj
