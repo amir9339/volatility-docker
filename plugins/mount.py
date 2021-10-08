@@ -1,7 +1,3 @@
-"""
-Contributors
-"""
-
 from typing import List, Tuple
 import math
 import logging
