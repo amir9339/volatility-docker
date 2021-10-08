@@ -107,7 +107,7 @@ class Mount(interfaces.plugins.PluginInterface):
                                         absolute=True)
 
         # list of all mounts
-        all_mounts = list()
+        mounts = list()
 
         # iterate through mount_hashtable
         for hash in mount_hashtable:
@@ -124,36 +124,21 @@ class Mount(interfaces.plugins.PluginInterface):
 
             # walk linked list of mounts
             for mount in first_mount.mnt_hash:
-                all_mounts.append(mount)
+                mounts.append(mount)
 
-        vollog.info(f'total mounts: {len(all_mounts)}')
+        vollog.info(f'total mounts: {len(mounts)}')
 
-        # list of unique mounts
-        mounts = list()
-
-        # remember which superblocks we've seen
-        # 2 mounts that point to the same superblock are considered the same mount
-        seen_sbs = set()
-
-        # iterate through mounts
-        for mount in all_mounts:
-            # get superblock
-            sb = mount.get_mnt_sb()
-            # we've seen this one
-            if sb in seen_sbs:
-                continue
-            seen_sbs.add(sb)
-            mounts.append(mount)
-
-        vollog.info(f'unique mounts: {len(mounts)}')
         return mounts
     
     @classmethod
-    def parse_mount(cls, mount: symbols.linux.extensions.mount) -> Tuple[str, str, str, str, str]:
+    def parse_mount(cls, mount: symbols.linux.extensions.mount) -> Tuple[int, str, str, str, str, str]:
         """
         Parse a mount and return the following tuple of strings:
-        devname, path, fstype, access, flags
+        id, devname, path, fstype, access, flags
         """
+        # get id
+        id = mount.mnt_id
+
         # get devname
         devname = utility.pointer_to_string(mount.mnt_devname, MAX_STRING)
 
@@ -187,12 +172,18 @@ class Mount(interfaces.plugins.PluginInterface):
                 except KeyError:
                     flags.append(f'FLAG_{hex(flag)}')
         
-        return devname, path, fs_type, access, ','.join(flags)
+        return id, devname, path, fs_type, access, ','.join(flags)
 
     def _generator(self):
+        mounts = dict()
         for mount in self.get_mount_points(self.context, self.config['kernel']):
-            devname, path, fstype, access, flags = self.parse_mount(mount)
-            yield (0, (devname, path, fstype, access, flags))
+            id, devname, path, fstype, access, flags = self.parse_mount(mount)
+            mounts[id] = (id, devname, path, fstype, access, flags)
+        
+        sorted_ids = list(mounts.keys())
+        sorted_ids.sort()
+        for id in sorted_ids:
+            yield (0, mounts[id])
     
     def run(self):
-        return renderers.TreeGrid([('Devname', str), ('Path', str), ('FS Type', str), ('Access', str), ('Flags', str)], self._generator())
+        return renderers.TreeGrid([('ID', int), ('Devname', str), ('Path', str), ('FS Type', str), ('Access', str), ('Flags', str)], self._generator())
