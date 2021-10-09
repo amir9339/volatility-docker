@@ -40,6 +40,8 @@ class linux_ifconfig(linux_common.AbstractLinuxCommand):
             yield net_dev
 
     def _get_devs_namespace(self):
+
+        # Get network namespace list and define list_head
         nslist_addr = self.addr_space.profile.get_symbol("net_namespace_list")
         nethead = obj.Object("list_head", offset = nslist_addr, vm = self.addr_space)
 
@@ -52,14 +54,18 @@ class linux_ifconfig(linux_common.AbstractLinuxCommand):
                 yield net_dev
 
     def _gather_net_dev_info(self, net_dev):
+        
+        # mac_addr and promisc(ous mode) are properties of net_dev symbol (At least thats what written here)
         mac_addr = net_dev.mac_addr
         promisc  = str(net_dev.promisc)
 
+        # ip_ptr is a pointer to an in_device object which holds data about the devices list and IP layer 
         in_dev = obj.Object("in_device", offset = net_dev.ip_ptr, vm = self.addr_space)
         
+        # Walk wach IP(?) device inside the list
         for dev in in_dev.devices():
-            ip_addr = dev.ifa_address.cast('IpAddress')
-            name    = dev.ifa_label
+            ip_addr = dev.ifa_address.cast('IpAddress') # Get it's IP adress
+            name    = dev.ifa_label # Get it's name
             yield (name, ip_addr, mac_addr, promisc)
 
     def calculate(self):
@@ -67,10 +73,10 @@ class linux_ifconfig(linux_common.AbstractLinuxCommand):
 
         # newer kernels
         if self.addr_space.profile.get_symbol("net_namespace_list"):
-            func = self._get_devs_namespace
+            func = self._get_devs_namespace # Use _get_devs_namespace function
 
         elif self.addr_space.profile.get_symbol("dev_base"):
-            func = self._get_devs_base
+            func = self._get_devs_base # Use _get_devs_base function
    
         else:
             debug.error("Unable to determine ifconfig information")
