@@ -62,10 +62,11 @@ class linux_ifconfig(linux_common.AbstractLinuxCommand):
         # ip_ptr is a pointer to an in_device object which holds data about the devices list and IP layer 
         in_dev = obj.Object("in_device", offset = net_dev.ip_ptr, vm = self.addr_space)
         
-        # Walk wach IP(?) device inside the list
+        # Walk each device inside interfaces
+        #  list
         for dev in in_dev.devices():
-            ip_addr = dev.ifa_address.cast('IpAddress') # Get it's IP adress
-            name    = dev.ifa_label # Get it's name
+            ip_addr = dev.ifa_address.cast('IpAddress') # Get interface IP adress
+            name    = dev.ifa_label # Get interface name
             yield (name, ip_addr, mac_addr, promisc)
 
     def calculate(self):
