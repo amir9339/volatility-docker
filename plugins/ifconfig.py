@@ -10,7 +10,7 @@ MAX_STRING = 256
 class Ifconfig(interfaces.plugins.PluginInterface):
     """ Ifconfig emulation plugin """
 
-    _required_framework_version = (1, 2, 0)
+    _required_framework_version = (2, 0, 0)
 
     _version = (2, 0, 0)
 
@@ -26,12 +26,37 @@ class Ifconfig(interfaces.plugins.PluginInterface):
         """
 
         vmlinux = context.modules[vmlinux_module_name]
+        net_namespace_list = vmlinux.object_from_symbol(symbol_name = "net_namespace_list") # Get net_namespace_list object which is a list_head object 
+        net_namespace_list = net_namespace_list.cast("net")
 
-        # Get network namespace list and define list_head
-        nslist_addr = vmlinux.object_from_symbol(symbol_name = 'net_namespace_list')
-        print(dir(nslist_addr))
-        nslist = nslist_addr.cast("list_head")
+        for ns in net_namespace_list.list:
+            #print(ns.ifindex)
+            #for net_dev in ns.dev_base_head.to_list("net_device", "dev_list"):
+            print('next namespace')
+            first = ns.dev_base_head.next.dereference().cast('net_device')
+            for net_dev in first.dev_list:
+                print(net_dev.mac_addr)
 
+
+        table_name = net_namespace_list.vol.type_name.split(constants.BANG)[0]
+
+        # Walk each network name space in namespaces list
+        for net in net_namespace_list.to_list(table_name + constants.BANG + "net", "list"):
+
+            net_devices_list = net.dev_base_head.to_list(table_name + constants.BANG + "net_device", "dev_list")
+
+            for net_device in net_devices_list:
+                #print(dir(net_device))
+                print((net_device.ip_ptr))
+                ip_addr = utility.pointer_to_string(net_device.ip_ptr, MAX_STRING)
+
+                #print(vmlinux.layer_name)
+                in_device = context.object(table_name + constants.BANG + "in_device",
+                    layer_name = vmlinux.layer_name,
+                    offset = net_device.ip_ptr)
+
+                #print(dir(in_device))
+                print("\n")                
 
     @classmethod
     def get_requirements(cls) -> List[interfaces.configuration.RequirementInterface]:
