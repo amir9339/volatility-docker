@@ -62,7 +62,7 @@ class Mount(interfaces.plugins.PluginInterface):
     def get_mount_points(cls,
                         context: interfaces.context.ContextInterface,
                         vmlinux_module_name: str) -> List[symbols.linux.extensions.mount]:
-        """Extract a list of mount objects."""
+        """Extract a list of all mounts."""
         vmlinux = context.modules[vmlinux_module_name]
         kernel = context.modules[vmlinux_module_name]
         layer = context.layers[kernel.layer_name]
@@ -129,11 +129,52 @@ class Mount(interfaces.plugins.PluginInterface):
         vollog.info(f'total mounts: {len(mounts)}')
 
         return mounts
-    
+
+    @classmethod
+    def get_effective_mount_points(cls,
+                        context: interfaces.context.ContextInterface,
+                        vmlinux_module_name: str) -> List[symbols.linux.extensions.mount]:
+        """
+        Extract a list of "effective" mount points.
+        When extracting all mounts, multiple mounts can point to the same superblock.
+        Because the superblock represents an instance of a file system,
+        Only a single mount for each superblock is relevant.
+        The mount with the lowest ID is considered "effective".
+        """
+        # get all mounts
+        all_mounts = cls.get_mount_points(context, vmlinux_module_name)
+
+        # dictionary indexed by superblock with value mount with lowest ID that points to it
+        superblocks = dict()
+
+        # iterate through all mounts
+        for mount in all_mounts:
+            # get devname
+            devname = utility.pointer_to_string(mount.mnt_devname, MAX_STRING)
+
+            # ignore devtmpfs - it has the lowest ID for the superblock of type devtmpfs,
+            # but the effective mount for this superblock (as listed by the mount command) is udev
+            if devname == 'devtmpfs':
+                continue
+
+            sb = mount.get_mnt_sb()
+
+            # superblock not in dict
+            if sb not in superblocks:
+                superblocks[sb] = mount
+            
+            # ID is lower than lowest ID for this superblock
+            elif mount.mnt_id < superblocks[sb].mnt_id:
+                superblocks[sb] = mount
+        
+        # build list of effective mounts
+        effective_mounts = [mount for mount in superblocks.values()]
+        return effective_mounts
+
     @classmethod
     def parse_mount(cls, mount: symbols.linux.extensions.mount) -> Tuple[int, str, str, str, str, str]:
         """
-        Parse a mount and return the following tuple of strings:
+        Parse a mount and return the following tuple:
         id, devname, path, fstype, access, flags
         """
         # get id
@@ -176,7 +217,7 @@ class Mount(interfaces.plugins.PluginInterface):
 
     def _generator(self):
         mounts = dict()
-        for mount in self.get_mount_points(self.context, self.config['kernel']):
+        for mount in self.get_effective_mount_points(self.context, self.config['kernel']):
             id, devname, path, fstype, access, flags = self.parse_mount(mount)
             mounts[id] = (id, devname, path, fstype, access, flags)
         
