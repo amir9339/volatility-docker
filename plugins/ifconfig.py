@@ -26,16 +26,15 @@ class Ifconfig(interfaces.plugins.PluginInterface):
         """
 
         vmlinux = context.modules[vmlinux_module_name]
-        net_namespace_list = vmlinux.object_from_symbol(symbol_name = "net_namespace_list") # Get net_namespace_list object which is a list_head object 
-        net_namespace_list = net_namespace_list.cast("net") # Convert list to a net objects list
-
-        # Walk each network namespace
-        for ns in net_namespace_list.list:
-            
-            # Walk network devices list inside each namespace
-            first = ns.dev_base_head.next.dereference().cast('net_device')
-            for net_dev in first.dev_list:
-                yield net_dev
+        net_namespace_list = vmlinux.object_from_symbol(symbol_name = "net_namespace_list") # Get net_namespace_list object which is a list_head object
+        for i, net_ns in enumerate(net_namespace_list.to_list('symbol_table_name1!net', 'list', sentinel=False)):
+            if i == 0:
+                continue
+            print(f'ifindex: {net_ns.ifindex}')
+            for interface in net_ns.dev_base_head.to_list('symbol_table_name1!net_device', 'dev_list', sentinel=True):
+                name = utility.array_to_string(interface.name, 16)
+                print(f'name: {name}')
+                yield interface
 
     def _parse_mac_addr_from_net_dev(self, net_dev):
         """ 
