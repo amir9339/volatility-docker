@@ -1,0 +1,29 @@
+vol@volatility-docker:~$ sudo lsns
+        NS TYPE   NPROCS   PID USER             COMMAND
+4026531835 cgroup    214     1 root             /sbin/init auto automatic-ubiquity noprompt
+4026531836 pid       212     1 root             /sbin/init auto automatic-ubiquity noprompt
+4026531837 user      214     1 root             /sbin/init auto automatic-ubiquity noprompt
+4026531838 uts       209     1 root             /sbin/init auto automatic-ubiquity noprompt
+4026531839 ipc       212     1 root             /sbin/init auto automatic-ubiquity noprompt
+4026531840 mnt       205     1 root             /sbin/init auto automatic-ubiquity noprompt
+4026531860 mnt         1    21 root             kdevtmpfs
+4026532000 net       212     1 root             /sbin/init auto automatic-ubiquity noprompt
+4026532556 mnt         1   501 root             /lib/systemd/systemd-udevd
+4026532557 uts         1   501 root             /lib/systemd/systemd-udevd
+4026532630 mnt         1   706 systemd-timesync /lib/systemd/systemd-timesyncd
+4026532631 uts         1   706 systemd-timesync /lib/systemd/systemd-timesyncd
+4026532632 mnt         1   791 systemd-network  /lib/systemd/systemd-networkd
+4026532642 mnt         1   802 systemd-resolve  /lib/systemd/systemd-resolved
+4026532648 mnt         1  6343 root             sleep 4200
+4026532649 uts         1  6343 root             sleep 4200
+4026532650 ipc         1  6343 root             sleep 4200
+4026532651 pid         1  6343 root             sleep 4200
+4026532653 net         1  6343 root             sleep 4200
+4026532699 mnt         1   827 root             /usr/sbin/irqbalance --foreground
+4026532711 mnt         1  6417 root             sleep 3000
+4026532712 uts         1  6417 root             sleep 3000
+4026532713 ipc         1  6417 root             sleep 3000
+4026532714 pid         1  6417 root             sleep 3000
+4026532716 net         1  6417 root             sleep 3000
+4026532756 mnt         1   834 root             /lib/systemd/systemd-logind
+4026532758 uts         1   834 root             /lib/systemd/systemd-logind

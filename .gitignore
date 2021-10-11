@@ -1,6 +1,7 @@
 # Project specific
 volatility/
 memory_samples/*
+*.lime
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

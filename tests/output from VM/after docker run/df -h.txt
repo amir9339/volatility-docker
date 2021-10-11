@@ -1,0 +1,19 @@
+vol@volatility-docker:~$ sudo df -h
+Filesystem                         Size  Used Avail Use% Mounted on
+udev                               181M     0  181M   0% /dev
+tmpfs                               45M  1.5M   44M   4% /run
+/dev/mapper/ubuntu--vg-ubuntu--lv   19G   14G  4.0G  78% /
+tmpfs                              225M     0  225M   0% /dev/shm
+tmpfs                              5.0M     0  5.0M   0% /run/lock
+tmpfs                              225M     0  225M   0% /sys/fs/cgroup
+/dev/sda2                          976M  106M  804M  12% /boot
+/dev/loop2                          62M   62M     0 100% /snap/core20/1169
+/dev/loop1                          56M   56M     0 100% /snap/core18/2128
+/dev/loop3                          72M   72M     0 100% /snap/lxd/16099
+/dev/loop0                          55M   55M     0 100% /snap/core18/1880
+/dev/loop4                          33M   33M     0 100% /snap/snapd/13170
+/dev/loop5                          68M   68M     0 100% /snap/lxd/21545
+/dev/loop6                          30M   30M     0 100% /snap/snapd/8542
+tmpfs                               45M     0   45M   0% /run/user/1000
+overlay                             19G   14G  4.0G  78% /var/lib/docker/overlay2/3b403e15f846eb22819de48a7c9b7b3ebbfce5524c413da5d4fd2c421676fcec/merged
+overlay                             19G   14G  4.0G  78% /var/lib/docker/overlay2/612b99b484646b25f427e57cd4251ceb3d96afd37fb02bdfa3c02c328d29de97/merged
