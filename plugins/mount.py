@@ -55,8 +55,12 @@ class Mount(interfaces.plugins.PluginInterface):
     @classmethod
     def get_requirements(cls) -> List[interfaces.configuration.RequirementInterface]:
         return [requirements.ModuleRequirement(name='kernel',
-                                            description='Linux kernel',
-                                            architectures=['Intel32', 'Intel64'])]
+                                               description='Linux kernel',
+                                               architectures=['Intel32', 'Intel64']),
+                requirements.BooleanRequirement(name='all',
+                                                description='List all mounts',
+                                                optional=True)
+        ]
     
     @classmethod
     def get_mount_points(cls,
@@ -64,8 +68,7 @@ class Mount(interfaces.plugins.PluginInterface):
                         vmlinux_module_name: str) -> List[symbols.linux.extensions.mount]:
         """Extract a list of all mounts."""
         vmlinux = context.modules[vmlinux_module_name]
-        kernel = context.modules[vmlinux_module_name]
-        layer = context.layers[kernel.layer_name]
+        layer = context.layers[vmlinux.layer_name]
 
         # kernel >= 3.13.9 uses an hlist_head instead of a list_head
         if vmlinux.has_symbol('set_mphash_entries'):
@@ -107,7 +110,7 @@ class Mount(interfaces.plugins.PluginInterface):
                                         absolute=True)
 
         # list of all mounts
-        mounts = list()
+        mounts = dict()
 
         # iterate through mount_hashtable
         for hash in mount_hashtable:
@@ -124,11 +127,15 @@ class Mount(interfaces.plugins.PluginInterface):
 
             # walk linked list of mounts
             for mount in first_mount.mnt_hash:
-                mounts.append(mount)
+                mounts[mount.mnt_id] = mount
 
         vollog.info(f'total mounts: {len(mounts)}')
 
-        return mounts
+        # sort mounts
+        ids = [mount.mnt_id for mount in mounts.values()]
+        ids.sort()
+
+        return [mounts[mnt_id] for mnt_id in ids]
 
     @classmethod
     def get_effective_mount_points(cls,
@@ -168,17 +175,27 @@ class Mount(interfaces.plugins.PluginInterface):
                 superblocks[sb] = mount
         
         # build list of effective mounts
-        effective_mounts = [mount for mount in superblocks.values()]
-        return effective_mounts
+        effective_mounts = dict()
+        for mount in superblocks.values():
+            effective_mounts[mount.mnt_id] = mount
+
+        # sort mounts
+        ids = [mount.mnt_id for mount in effective_mounts.values()]
+        ids.sort()
+
+        return [effective_mounts[mnt_id] for mnt_id in ids]
 
     @classmethod
-    def parse_mount(cls, mount: symbols.linux.extensions.mount) -> Tuple[int, str, str, str, str, str]:
+    def get_mount_info(cls, mount: symbols.linux.extensions.mount) -> Tuple[int, str, str, str, str, str]:
         """
         Parse a mount and return the following tuple:
         id, devname, path, fstype, access, flags
         """
-        # get id
-        id = mount.mnt_id
+        # get superblock id
+        sb_id = mount.get_mnt_sb().dereference().s_dev
+
+        # get mount id
+        mnt_id = mount.mnt_id
 
         # get devname
         devname = utility.pointer_to_string(mount.mnt_devname, MAX_STRING)
@@ -213,18 +230,16 @@ class Mount(interfaces.plugins.PluginInterface):
                 except KeyError:
                     flags.append(f'FLAG_{hex(flag)}')
         
-        return id, devname, path, fs_type, access, ','.join(flags)
+        return sb_id, mnt_id, devname, path, fs_type, access, ','.join(flags)
 
     def _generator(self):
-        mounts = dict()
-        for mount in self.get_effective_mount_points(self.context, self.config['kernel']):
-            id, devname, path, fstype, access, flags = self.parse_mount(mount)
-            mounts[id] = (id, devname, path, fstype, access, flags)
-        
-        sorted_ids = list(mounts.keys())
-        sorted_ids.sort()
-        for id in sorted_ids:
-            yield (0, mounts[id])
+        # check if we are listing all mounts
+        func = self.get_effective_mount_points
+        if self.config.get('all', None):
+            func = self.get_mount_points
+
+        for mount in func(self.context, self.config['kernel']):
+            yield (0, self.get_mount_info(mount))
     
     def run(self):
-        return renderers.TreeGrid([('ID', int), ('Devname', str), ('Path', str), ('FS Type', str), ('Access', str), ('Flags', str)], self._generator())
+        return renderers.TreeGrid([('Superblock ID', int), ('Mount ID', int), ('Devname', str), ('Path', str), ('FS Type', str), ('Access', str), ('Flags', str)], self._generator())
