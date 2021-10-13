@@ -1,4 +1,4 @@
-from typing import Callable, List, Tuple, Set, Any
+from typing import Callable, List, Tuple, Set, Any, Union
 import logging
 
 from volatility3.framework import constants, renderers, interfaces, symbols
@@ -10,8 +10,6 @@ from volatility3.framework import exceptions
 
 """
 TODO:
-    - make sure mount and path filters work
-    - make sure it works on larger memory and isn't too slow
     - extract file permissions (drwxrwxrwx)
     - extract file size
     - extract created/modified/access times
@@ -50,10 +48,12 @@ class ListFiles(interfaces.plugins.PluginInterface):
                                            optional=True),
             requirements.BooleanRequirement(name='all',
                                             description='List files from all mounts (default uses only "effective" mounts)',
-                                            optional=True),
+                                            optional=True,
+                                            default=False),
             requirements.BooleanRequirement(name='sort',
                                             description='Sort files by path',
-                                            optional=True)
+                                            optional=True,
+                                            default=True)
         ]
     
     @classmethod
@@ -96,31 +96,32 @@ class ListFiles(interfaces.plugins.PluginInterface):
     @classmethod
     def get_file_info(cls,
                       mount: symbols.linux.extensions.mount,
-                      dentry: symbols.linux.extensions.dentry) -> Tuple[int, int, int, str]:
+                      dentry: symbols.linux.extensions.dentry) -> Union[None, Tuple[int, int, int, str]]:
         """
         Parse a mount and dentry pair and return the following tuple:
         mount_id, inode_id, inode_address, file_path
         """
-        # get mount id
-        mnt_id = mount.mnt_id
-
-        # get inode id
-        try:
-            inode_id = dentry.d_inode.dereference().i_ino
-        except exceptions.PagedInvalidAddressException:
-            inode_id = -1
-            inode_exists = False
-        else:
-            inode_exists = True
-
-        # get inode address
-        inode_addr = int(dentry.d_inode) if inode_exists else 0
-
         # get file path
         sb = mount.get_mnt_sb()
         s_root = sb.s_root.dereference()
         mnt_parent = mount.mnt_parent.dereference()
-        path = symbols.linux.LinuxUtilities._do_get_path(s_root, mnt_parent, dentry, mount)
+        try:
+            path = symbols.linux.LinuxUtilities._do_get_path(s_root, mnt_parent, dentry, mount)
+        # bad dentry
+        except exceptions.PagedInvalidAddressException:
+            return None
+
+        # get mount id
+        mnt_id = mount.mnt_id
+
+        # get inode ID and address
+        try:
+            inode_id = dentry.d_inode.dereference().i_ino
+            inode_addr = int(dentry.d_inode)
+        # bad inode
+        except exceptions.PagedInvalidAddressException:
+            inode_id = -1
+            inode_addr = 0
 
         return mnt_id, inode_id, inode_addr, path
     
@@ -155,7 +156,7 @@ class ListFiles(interfaces.plugins.PluginInterface):
     def get_dentries(cls,
                      context: interfaces.context.ContextInterface,
                      vmlinux_module_name: str,
-                     sb_filter: Callable[[Any], bool] = lambda _: False,
+                     mnt_filter: Callable[[Any], bool] = lambda _: False,
                      all: bool = False) -> Tuple[symbols.linux.extensions.mount, List[symbols.linux.extensions.dentry]]:
         """Get a list of all cached dentries in the filesystem that match the given filters."""
         vmlinux = context.modules[vmlinux_module_name]
@@ -170,7 +171,7 @@ class ListFiles(interfaces.plugins.PluginInterface):
 
         for i, mount in enumerate(mounts):
             # mount is filtered out
-            if sb_filter(mount):
+            if mnt_filter(mount):
                 continue
 
             vollog.info(f'[{i}/{num_mounts}]  listing files for mount ID {mount.mnt_id}')
@@ -197,7 +198,7 @@ class ListFiles(interfaces.plugins.PluginInterface):
         files = dict()
         dentries = self.get_dentries(context=self.context,
                                      vmlinux_module_name=self.config['kernel'],
-                                     sb_filter=self.create_mount_filter(self.config.get('mount', None)),
+                                     mnt_filter=self.create_mount_filter(self.config.get('mount', None)),
                                      all=self.config.get('all', None))
         num_dentries = len(dentries)
         for i, (mount, dentry) in enumerate(dentries):

@@ -191,9 +191,6 @@ class Mount(interfaces.plugins.PluginInterface):
         Parse a mount and return the following tuple:
         id, devname, path, fstype, access, flags
         """
-        # get superblock id
-        sb_id = mount.get_mnt_sb().dereference().s_dev
-
         # get mount id
         mnt_id = mount.mnt_id
 
@@ -230,7 +227,7 @@ class Mount(interfaces.plugins.PluginInterface):
                 except KeyError:
                     flags.append(f'FLAG_{hex(flag)}')
         
-        return sb_id, mnt_id, devname, path, fs_type, access, ','.join(flags)
+        return mnt_id, devname, path, fs_type, access, ','.join(flags)
 
     def _generator(self):
         # check if we are listing all mounts
@@ -242,4 +239,4 @@ class Mount(interfaces.plugins.PluginInterface):
             yield (0, self.get_mount_info(mount))
     
     def run(self):
-        return renderers.TreeGrid([('Superblock ID', int), ('Mount ID', int), ('Devname', str), ('Path', str), ('FS Type', str), ('Access', str), ('Flags', str)], self._generator())
+        return renderers.TreeGrid([('ID', int), ('Devname', str), ('Path', str), ('FS Type', str), ('Access', str), ('Flags', str)], self._generator())

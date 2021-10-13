@@ -2,6 +2,7 @@
 volatility/
 memory_samples/*
 *.lime
+prepare_for_commit.bat
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
