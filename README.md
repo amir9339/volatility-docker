@@ -17,7 +17,7 @@ We want to submit this project to the 2021 Volatility Plugin Contest.
     - `docker diff`
     - `docker save`
     - `docker port`
-    - `docker log`
+    - `docker logs`
     - And more...
 - Create a plugin that detects common attacks / misconfigurations of Docker containers.
 
