@@ -165,7 +165,7 @@ class ListFiles(interfaces.plugins.PluginInterface):
         dentries = []
 
         # iterate through all mounts
-        func = mount_plugin.Mount.get_mount_points if all else mount_plugin.Mount.get_effective_mount_points
+        func = mount_plugin.Mount.get_mounts if all else mount_plugin.Mount.get_effective_mounts
         mounts = func(context, vmlinux_module_name)
         num_mounts = len(mounts)
 

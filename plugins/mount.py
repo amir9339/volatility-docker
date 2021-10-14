@@ -10,7 +10,7 @@ from volatility3.framework.objects import utility
 
 MAX_STRING = 256
 
-# for flag string
+# mount flags - see https://elixir.bootlin.com/linux/v5.15-rc5/source/include/linux/mount.h#L26
 MNT_FLAGS = {
     0x1        : "MNT_NOSUID",
     0x2        : "MNT_NODEV",
@@ -63,9 +63,9 @@ class Mount(interfaces.plugins.PluginInterface):
         ]
     
     @classmethod
-    def get_mount_points(cls,
-                        context: interfaces.context.ContextInterface,
-                        vmlinux_module_name: str) -> List[symbols.linux.extensions.mount]:
+    def get_mounts(cls,
+                   context: interfaces.context.ContextInterface,
+                   vmlinux_module_name: str) -> List[symbols.linux.extensions.mount]:
         """Extract a list of all mounts."""
         vmlinux = context.modules[vmlinux_module_name]
         layer = context.layers[vmlinux.layer_name]
@@ -138,9 +138,9 @@ class Mount(interfaces.plugins.PluginInterface):
         return [mounts[mnt_id] for mnt_id in ids]
 
     @classmethod
-    def get_effective_mount_points(cls,
-                        context: interfaces.context.ContextInterface,
-                        vmlinux_module_name: str) -> List[symbols.linux.extensions.mount]:
+    def get_effective_mounts(cls,
+                             context: interfaces.context.ContextInterface,
+                             vmlinux_module_name: str) -> List[symbols.linux.extensions.mount]:
         """
         Extract a list of "effective" mount points.
         When extracting all mounts, multiple mounts can point to the same superblock.
@@ -149,7 +149,7 @@ class Mount(interfaces.plugins.PluginInterface):
         The mount with the lowest ID is considered "effective".
         """
         # get all mounts
-        all_mounts = cls.get_mount_points(context, vmlinux_module_name)
+        all_mounts = cls.get_mounts(context, vmlinux_module_name)
 
         # dictionary indexed by superblock with value mount with lowest ID that points to it
         superblocks = dict()
@@ -231,9 +231,9 @@ class Mount(interfaces.plugins.PluginInterface):
 
     def _generator(self):
         # check if we are listing all mounts
-        func = self.get_effective_mount_points
+        func = self.get_effective_mounts
         if self.config.get('all', None):
-            func = self.get_mount_points
+            func = self.get_mounts
 
         for mount in func(self.context, self.config['kernel']):
             yield (0, self.get_mount_info(mount))
