@@ -201,6 +201,30 @@ class task_struct(generic.GenericIntelProcess):
 
             yield (start, end - start)
 
+    def _get_upid(self):
+        if self.has_member('thread_pid'):
+            thread_pid = self.thread_pid.dereference()
+        else:
+            raise AttributeError('Unable to find task_struct -> thread_pid')
+
+        try:
+            return thread_pid.numbers[thread_pid.level]
+        # The numbers array is defined as a single element in size, but in practice it may have an arbitrary size.
+        # Beacuase C doesn't care about out-of-bounds access, there's no problem accessing indexes other than 0
+        # during run time, but python won't let us so we need to redefine this array as the appropriate size.
+        except IndexError:
+            numbers = thread_pid.numbers
+            numbers.count = thread_pid.level + 1
+            return numbers[thread_pid.level]
+    
+    def get_pid_ns(self):
+        """Returns the pid_namespace struct of the current task."""
+        return self._get_upid().ns.dereference()
+    
+    def get_namespace_pid(self):
+        """Returns the pid of the task as it is seen from within its pid namespace."""
+        return self._get_upid().nr
+
 
 class fs_struct(objects.StructType):
 
@@ -591,3 +615,71 @@ class kobject(objects.StructType):
             ret = refcnt.refs.counter
 
         return ret
+
+
+class nsproxy(objects.StructType):
+    def get_uts_ns(self):
+        if self.has_member('uts_ns'):
+            return self.uts_ns.dereference()
+        else:
+            raise AttributeError('Unable to find nsproxy -> uts_ns')
+
+    def get_ipc_ns(self):
+        if self.has_member('ipc_ns'):
+            return self.ipc_ns.dereference()
+        else:
+            raise AttributeError('Unable to find nsproxy -> ipc_ns')
+    
+    def get_mnt_ns(self):
+        if self.has_member('mnt_ns'):
+            return self.mnt_ns.dereference()
+        else:
+            raise AttributeError('Unable to find nsproxy -> mnt_ns')
+        
+    def get_net_ns(self):
+        if self.has_member('net_ns'):
+            return self.net_ns.dereference()
+        else:
+            raise AttributeError('Unable to find nsproxy -> net_ns')
+    
+    def get_user_ns(self):
+        ipc_ns = self.get_ipc_ns()
+
+        if ipc_ns.has_member('user_ns'):
+            return ipc_ns.user_ns.dereference()
+        else:
+            raise AttributeError('Unable to find ipc_namespace -> user_ns')
+
+
+class generic_namespace(objects.StructType):
+    def get_inum(self):
+        if self.has_member('proc_inum'):
+            return self.proc_inum
+        elif self.has_member('ns'):
+            return self.ns.inum
+        else:
+            raise AttributeError('Unable to find namespace -> inum')
+
+
+class uts_namespace(generic_namespace):
+    pass
+
+
+class ipc_namespace(generic_namespace):
+    pass
+
+
+class mnt_namespace(generic_namespace):
+    pass
+
+
+class pid_namespace(generic_namespace):
+    pass
+
+
+class net(generic_namespace):
+    pass
+
+
+class user_namespace(generic_namespace):
+    pass

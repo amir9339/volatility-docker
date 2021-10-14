@@ -30,6 +30,13 @@ class LinuxKernelIntermedSymbols(intermed.IntermediateSymbolTable):
         self.set_type_class('files_struct', extensions.files_struct)
         self.set_type_class('vfsmount', extensions.vfsmount)
         self.set_type_class('kobject', extensions.kobject)
+        self.set_type_class('nsproxy', extensions.nsproxy)
+        self.set_type_class('uts_namespace', extensions.uts_namespace)
+        self.set_type_class('ipc_namespace', extensions.ipc_namespace)
+        self.set_type_class('mnt_namespace', extensions.mnt_namespace)
+        self.set_type_class('pid_namespace', extensions.pid_namespace)
+        self.set_type_class('net', extensions.net)
+        self.set_type_class('user_namespace', extensions.user_namespace)
 
         if 'module' in self.types:
             self.set_type_class('module', extensions.module)
