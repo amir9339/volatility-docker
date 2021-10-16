@@ -1,11 +1,12 @@
-from typing import List, Tuple
+from typing import Iterable, List, Tuple, Callable, Any
 import math
 import logging
 
-from volatility3.framework import renderers, interfaces, symbols
+from volatility3.framework import renderers, interfaces, symbols, constants
 from volatility3.framework.configuration import requirements
 from volatility3.framework import exceptions
 from volatility3.framework.objects import utility
+from volatility3.plugins.linux import pslist
 
 
 MAX_STRING = 256
@@ -57,16 +58,28 @@ class Mount(interfaces.plugins.PluginInterface):
         return [requirements.ModuleRequirement(name='kernel',
                                                description='Linux kernel',
                                                architectures=['Intel32', 'Intel64']),
+                requirements.PluginRequirement(name='pslist',
+                                               plugin=pslist.PsList,
+                                               version=(2, 0, 0)),
                 requirements.BooleanRequirement(name='all',
                                                 description='List all mounts',
-                                                optional=True)
+                                                optional=True,
+                                                default=False),
+                requirements.ListRequirement(name='pid',
+                                             description='List mounts within the mount namespace of these PIDs',
+                                             element_type=int,
+                                             optional=True),
+                requirements.BooleanRequirement(name='sort',
+                                                description='Sort mounts by mount ID',
+                                                optional=True,
+                                                default=False)
         ]
     
     @classmethod
-    def get_mounts(cls,
-                   context: interfaces.context.ContextInterface,
-                   vmlinux_module_name: str) -> List[symbols.linux.extensions.mount]:
-        """Extract a list of all mounts."""
+    def get_all_mounts(cls,
+                       context: interfaces.context.ContextInterface,
+                       vmlinux_module_name: str) -> Iterable[symbols.linux.extensions.mount]:
+        """Extract a list of all mounts using the mount_hashtable."""
         vmlinux = context.modules[vmlinux_module_name]
         layer = context.layers[vmlinux.layer_name]
 
@@ -74,7 +87,7 @@ class Mount(interfaces.plugins.PluginInterface):
         if vmlinux.has_symbol('set_mphash_entries'):
             mnt_type = 'mount'
             mount_hashtable_type = 'hlist_head'
-        # kernel >= 3.3 makes mount_hashtable be a table of struct mount
+        # in kernel >= 3.3 vfsmount was changed to mount
         elif vmlinux.has_type('mount'):
             mnt_type = 'mount'
             mount_hashtable_type = 'list_head'
@@ -109,9 +122,6 @@ class Mount(interfaces.plugins.PluginInterface):
                                         count=mount_hashtable_entries,
                                         absolute=True)
 
-        # list of all mounts
-        mounts = dict()
-
         # iterate through mount_hashtable
         for hash in mount_hashtable:
             # list_head - pointer to first mount is in 'next'
@@ -127,89 +137,104 @@ class Mount(interfaces.plugins.PluginInterface):
 
             # walk linked list of mounts
             for mount in first_mount.mnt_hash:
-                mounts[mount.mnt_id] = mount
-
-        vollog.info(f'total mounts: {len(mounts)}')
-
-        # sort mounts
-        ids = [mount.mnt_id for mount in mounts.values()]
-        ids.sort()
-
-        return [mounts[mnt_id] for mnt_id in ids]
+                yield mount
 
     @classmethod
-    def get_effective_mounts(cls,
-                             context: interfaces.context.ContextInterface,
-                             vmlinux_module_name: str) -> List[symbols.linux.extensions.mount]:
-        """
-        Extract a list of "effective" mount points.
-        When extracting all mounts, multiple mounts can point to the same superblock.
-        Because the superblock represents an instance of a file system,
-        Only a single mount for each superblock is relevant.
-        The mount with the lowest ID is considered "effective".
-        """
-        # get all mounts
-        all_mounts = cls.get_mounts(context, vmlinux_module_name)
+    def get_mounts(cls,
+                   context: interfaces.context.ContextInterface,
+                   vmlinux_module_name: str,
+                   pid_filter: Callable[[Any], bool] = lambda pid: pid != 1) -> Iterable[symbols.linux.extensions.mount]:
+        """Extract a list of mounts belonging to the mount namespace of the specified pids."""
+        vmlinux = context.modules[vmlinux_module_name]
+        symbol_table = vmlinux.symbol_table_name
 
-        # dictionary indexed by superblock with value mount with lowest ID that points to it
-        superblocks = dict()
+        # get mount type
+        if vmlinux.has_type('mount'):
+            mnt_type = 'mount'
+        # in kernel >= 3.3 vfsmount was changed to mount
+        else:
+            mnt_type = 'vfsmount'
 
-        # iterate through all mounts
-        for mount in all_mounts:
-            # get devname
-            devname = utility.pointer_to_string(mount.mnt_devname, MAX_STRING)
+        # set of the IDs of the seen mount namespaces
+        seen_mnt_namespaces = set()
 
-            # ignore devtmpfs - it has the lowest ID for the superblock of type devtmpfs,
-            # but the effective mount for this superblock (as listed by the mount command) is udev
-            if devname == 'devtmpfs':
+        # iterate through tasks that match the filter
+        for task in pslist.PsList.list_tasks(context=context, vmlinux_module_name=vmlinux_module_name, filter_func=pid_filter):
+            vollog.info(f'listing mounts for pid {task.pid}')
+            try:
+                mnt_ns = task.get_mnt_ns()
+            except AttributeError as ex:
+                vollog.error(f'No mount namespace information available: {str(ex)}')
+                return
+            
+            # get identifier for mnt_ns
+            try:
+                identifier = mnt_ns.get_inum()
+            # in kernel < 3.8 mnt_namespace has no inum, track address of the mnt_namespace struct instead
+            except AttributeError:
+                identifier = mnt_ns.vol.offset
+            
+            # make sure we haven't seen this namespace yet
+            if identifier in seen_mnt_namespaces:
                 continue
 
-            sb = mount.get_mnt_sb()
+            # add namespace to seen namespaces
+            seen_mnt_namespaces.add(identifier)
 
-            # superblock not in dict
-            if sb not in superblocks:
-                superblocks[sb] = mount
-            
-            # ID is lower than lowest ID for this superblock
-            elif mount.mnt_id < superblocks[sb].mnt_id:
-                superblocks[sb] = mount
-        
-        # build list of effective mounts
-        effective_mounts = dict()
-        for mount in superblocks.values():
-            effective_mounts[mount.mnt_id] = mount
-
-        # sort mounts
-        ids = [mount.mnt_id for mount in effective_mounts.values()]
-        ids.sort()
-
-        return [effective_mounts[mnt_id] for mnt_id in ids]
+            # walk mount list
+            for mount in mnt_ns.list.to_list(symbol_table + constants.BANG + mnt_type, 'mnt_list'):
+                yield mount
 
     @classmethod
-    def get_mount_info(cls, mount: symbols.linux.extensions.mount) -> Tuple[int, str, str, str, str, str]:
-        """
-        Parse a mount and return the following tuple:
-        id, devname, path, fstype, access, flags
+    def get_mount_info(cls, mount:symbols.linux.extensions.mount) -> Tuple[int, str, str, str, str, str, str]:
+        """Parse a mount and return the following tuple:
+        id, devname, path, absolute_path, fstype, access, flags
         """
         # get mount id
         mnt_id = mount.mnt_id
+
+        # get parent id
+        parent_id = mount.get_mnt_parent().mnt_id
 
         # get devname
         devname = utility.pointer_to_string(mount.mnt_devname, MAX_STRING)
 
         # get path
-        sb = mount.get_mnt_sb().dereference()
-        s_root = sb.s_root.dereference()
-        mnt_parent = mount.mnt_parent.dereference()
-        mnt_root = mount.get_mnt_root().dereference()
-        path = symbols.linux.LinuxUtilities._do_get_path(s_root, mnt_parent, mnt_root, mount)
+        dentry = mount.mnt_mountpoint.get_root()
+        root_dentry = mount.get_mnt_root().dereference()
+        path = symbols.linux.LinuxUtilities._do_get_path(root_dentry, mount, dentry, mount)
+
+        # get absolute path
+        absolute_path = '-'
+        
+        # absolute path is only relevant for mounts with a master
+        if mount.mnt_master != 0:
+            # overlay mounts have a master mount whose path is the absolute path of this mount
+            if devname == 'overlay':
+                master = mount.mnt_master.dereference()
+                root_dentry = master.get_mnt_sb().s_root.dereference()
+                dentry = master.get_mnt_root().dereference()
+                absolute_path = symbols.linux.LinuxUtilities._do_get_path(root_dentry, master, dentry, master)
+            # other mount types just belong to a superblock whose root dentry is the root for the absolute path
+            else:
+                dentry = root_dentry
+                root_dentry = mount.get_mnt_sb().s_root.dereference()
+                absolute_path = symbols.linux.LinuxUtilities._do_get_path(root_dentry, mount, dentry, mount)
+        
+        # some mounts are mounted on an overlay mount that has a master, in this case use the parent's master's path and append the current path
+        elif mount.get_mnt_parent().mnt_master != 0:
+            master = mount.get_mnt_parent().mnt_master.dereference()
+            root_dentry = master.get_mnt_sb().s_root.dereference()
+            dentry = master.get_mnt_root().dereference()
+            absolute_path = symbols.linux.LinuxUtilities._do_get_path(root_dentry, master, dentry, master)
+            absolute_path += path
 
         # get fs type
         fs_type = utility.pointer_to_string(mount.get_mnt_sb().dereference().s_type.dereference().name, MAX_STRING)
 
         # get access
         mnt_flags = mount.get_mnt_flags()
-        sb_flags = sb.s_flags
+        sb_flags = mount.get_mnt_sb().s_flags
         if mnt_flags & MNT_READONLY or sb_flags & SB_RDONLY:
             access = 'RO'
         else:
@@ -227,16 +252,34 @@ class Mount(interfaces.plugins.PluginInterface):
                 except KeyError:
                     flags.append(f'FLAG_{hex(flag)}')
         
-        return mnt_id, devname, path, fs_type, access, ','.join(flags)
+        return mnt_id, parent_id, devname, path, absolute_path, fs_type, access, ','.join(flags)
 
     def _generator(self):
-        # check if we are listing all mounts
-        func = self.get_effective_mounts
-        if self.config.get('all', None):
-            func = self.get_mounts
+        # we are listing all mounts
+        if self.config.get('all', False):
+            mounts = self.get_all_mounts(self.context, self.config['kernel'])
 
-        for mount in func(self.context, self.config['kernel']):
+        # we are listing mounts that belong to the mount namespace of a list of pids
+        else:
+            pids = self.config.get('pid')
+            if not pids:
+                pids = [1]
+            pid_filter = pslist.PsList.create_pid_filter(pids)
+            mounts = self.get_mounts(self.context, self.config['kernel'], pid_filter)
+        
+        # sort mounts by ID
+        if self.config.get('sort', False):
+            mounts_by_id = {mount.mnt_id: mount for mount in mounts}
+            ids = list(mounts_by_id.keys())
+            ids.sort()
+            mounts = [mounts_by_id[id] for id in ids]
+
+        for mount in mounts:
             yield (0, self.get_mount_info(mount))
     
     def run(self):
-        return renderers.TreeGrid([('ID', int), ('Devname', str), ('Path', str), ('FS Type', str), ('Access', str), ('Flags', str)], self._generator())
+        # make sure 'all' and 'pid' aren't specified together
+        if self.config.get('all') and self.config.get('pid'):
+            raise ValueError('"pid" and "all" cannot be used together')
+
+        return renderers.TreeGrid([('Mount ID', int), ('Parent ID', int), ('Devname', str), ('Path', str), ('Absolute Path', str), ('FS Type', str), ('Access', str), ('Flags', str)], self._generator())

@@ -18,7 +18,7 @@ class PsList(interfaces.plugins.PluginInterface):
 
     _required_framework_version = (2, 0, 0)
 
-    _version = (2, 0, 0)
+    _version = (2, 1, 0)
 
     @classmethod
     def get_requirements(cls) -> List[interfaces.configuration.RequirementInterface]:
@@ -73,7 +73,7 @@ class PsList(interfaces.plugins.PluginInterface):
             
             else:
                 # Get namespace IDs.
-                # This is full of try excepts because different kernel versions
+                # This is full of try and excepts because different kernel versions
                 # have different available namespace types.
                 # If a certain namespace type does not exist, -1 is returned for its value.
                 if task.has_member('nsproxy'):
@@ -125,7 +125,7 @@ class PsList(interfaces.plugins.PluginInterface):
                 
                 # no task -> nsproxy
                 else:
-                    vollog.error('Unable to extract namespace information (no task->nsproxy member)')
+                    vollog.error('Unable to extract namespace information (no task -> nsproxy member)')
                     return
 
 

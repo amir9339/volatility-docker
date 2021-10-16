@@ -1,7 +1,7 @@
 from typing import Callable, List, Tuple, Set, Any, Union
 import logging
 
-from volatility3.framework import constants, renderers, interfaces, symbols
+from volatility3.framework import renderers, interfaces, symbols, constants
 from volatility3.framework.configuration import requirements
 from volatility3.framework.renderers import format_hints
 from volatility3.plugins.linux import mount as mount_plugin
@@ -39,6 +39,9 @@ class ListFiles(interfaces.plugins.PluginInterface):
             requirements.ModuleRequirement(name='kernel',
                                            description='Linux kernel',
                                            architectures=['Intel32', 'Intel64']),
+            requirements.PluginRequirement(name='mount',
+                                           plugin=mount_plugin.Mount,
+                                           version=(1, 0, 0)),
             requirements.ListRequirement(name='mount',
                                          description='Filter on specific FS mounts by mount ID',
                                          element_type=int,
@@ -129,7 +132,8 @@ class ListFiles(interfaces.plugins.PluginInterface):
     def _walk_dentry(cls,
                      context: interfaces.context.ContextInterface,
                      vmlinux_module_name: str,
-                     dentry_set: Set[symbols.linux.extensions.dentry], dentry: symbols.linux.extensions.dentry):
+                     dentry_set: Set[symbols.linux.extensions.dentry],
+                     dentry: symbols.linux.extensions.dentry):
         """Walks a dentry recursively, adding all child dentries to the given list."""
         vmlinux = context.modules[vmlinux_module_name]
         symbol_table = vmlinux.symbol_table_name
@@ -165,9 +169,10 @@ class ListFiles(interfaces.plugins.PluginInterface):
         dentries = []
 
         # iterate through all mounts
-        func = mount_plugin.Mount.get_mounts if all else mount_plugin.Mount.get_effective_mounts
+        func = mount_plugin.Mount.get_all_mounts if all else mount_plugin.Mount.get_effective_mounts
         mounts = func(context, vmlinux_module_name)
-        num_mounts = len(mounts)
+        #num_mounts = len(mounts)
+        num_mounts = '?'
 
         for i, mount in enumerate(mounts):
             # mount is filtered out

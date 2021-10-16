@@ -213,9 +213,8 @@ class task_struct(generic.GenericIntelProcess):
         # Beacuase C doesn't care about out-of-bounds access, there's no problem accessing indexes other than 0
         # during run time, but python won't let us so we need to redefine this array as the appropriate size.
         except IndexError:
-            numbers = thread_pid.numbers
-            numbers.count = thread_pid.level + 1
-            return numbers[thread_pid.level]
+            thread_pid.numbers.count = thread_pid.level + 1
+            return thread_pid.numbers[thread_pid.level]
     
     def get_pid_ns(self):
         """Returns the pid_namespace struct of the current task."""
@@ -224,6 +223,15 @@ class task_struct(generic.GenericIntelProcess):
     def get_namespace_pid(self):
         """Returns the pid of the task as it is seen from within its pid namespace."""
         return self._get_upid().nr
+    
+    def get_mnt_ns(self):
+        """Returns the mnt_namespace struct of the current task."""
+        if self.has_member('nsproxy'):
+            return self.nsproxy.get_mnt_ns()
+        elif self.has_member('namespace'):
+            return self.namespace.dereference()
+        else:
+            raise AttributeError('Unable to find task -> mnt_namespace')
 
 
 class fs_struct(objects.StructType):
@@ -398,7 +406,12 @@ class dentry(objects.StructType):
 
     def path(self) -> str:
         return self.d_name.name_as_str()
-
+    
+    def get_root(self):
+        root = self
+        while int(root.d_parent) != root.vol.offset:
+            root = root.d_parent.dereference()
+        return root
 
 class struct_file(objects.StructType):
 
@@ -573,7 +586,14 @@ class mount(objects.StructType):
 
     def get_mnt_mountpoint(self):
         return self.mnt_mountpoint
-
+    
+    def get_mnt_ns(self):
+        if self.has_member('mnt_ns'):
+            return self.mnt_ns
+        elif self.has_member('mnt_namespace'):
+            return self.mnt_namespace
+        else:
+            raise AttributeError('Unable to find mount -> mount namespace')
 
 class vfsmount(objects.StructType):
 
@@ -633,8 +653,10 @@ class nsproxy(objects.StructType):
     def get_mnt_ns(self):
         if self.has_member('mnt_ns'):
             return self.mnt_ns.dereference()
+        elif self.has_member('namespace'):
+            return self.namespace.dereference()
         else:
-            raise AttributeError('Unable to find nsproxy -> mnt_ns')
+            raise AttributeError('Unable to find nsproxy -> mnt_ns or nsproxy -> namespace')
         
     def get_net_ns(self):
         if self.has_member('net_ns'):
@@ -651,7 +673,7 @@ class nsproxy(objects.StructType):
             raise AttributeError('Unable to find ipc_namespace -> user_ns')
 
 
-class generic_namespace(objects.StructType):
+class GenericNamespace(objects.StructType):
     def get_inum(self):
         if self.has_member('proc_inum'):
             return self.proc_inum
@@ -661,25 +683,25 @@ class generic_namespace(objects.StructType):
             raise AttributeError('Unable to find namespace -> inum')
 
 
-class uts_namespace(generic_namespace):
+class uts_namespace(GenericNamespace):
     pass
 
 
-class ipc_namespace(generic_namespace):
+class ipc_namespace(GenericNamespace):
     pass
 
 
-class mnt_namespace(generic_namespace):
+class mnt_namespace(GenericNamespace):
     pass
 
 
-class pid_namespace(generic_namespace):
+class pid_namespace(GenericNamespace):
     pass
 
 
-class net(generic_namespace):
+class net(GenericNamespace):
     pass
 
 
-class user_namespace(generic_namespace):
+class user_namespace(GenericNamespace):
     pass
