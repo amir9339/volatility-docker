@@ -11,11 +11,8 @@ from volatility3.framework import exceptions
 
 """
 TODO:
-    - extract file permissions (drwxrwxrwx)
     - extract file size
     - extract created/modified/access times
-    - extract owner
-    - filter by file owner
 """
 
 
@@ -88,6 +85,10 @@ class ListFiles(interfaces.plugins.PluginInterface):
             requirements.StringRequirement(name='path',
                                            description='List files under a specified path',
                                            optional=True),
+            requirements.ListRequirement(name='uid',
+                                         description='Filter by owner UID',
+                                         element_type=int,
+                                         optional=True),
             requirements.BooleanRequirement(name='sort',
                                             description='Sort files by path',
                                             optional=True)
@@ -129,6 +130,27 @@ class ListFiles(interfaces.plugins.PluginInterface):
             return not x.startswith(path)
         
         return filter_func
+    
+    @classmethod
+    def create_uid_filter(cls, uid_list: List[int] = None) -> Callable[[Any], bool]:
+        """Constructs a filter function for owner UIDs.
+        Args:
+            uid_list: List of UIDs that are acceptable (or None if all are acceptable)
+        Returns:
+            Function which, when provided a UID, returns True if the UID is to be filtered out
+        """
+        if uid_list is None:
+            uid_list = []
+        filter_list = [x for x in uid_list if x is not None]
+
+        if filter_list:
+
+            def filter_func(uid):
+                return uid not in filter_list
+            
+            return filter_func
+        else:
+            return lambda _: False
 
     @classmethod
     def _mode_to_str(cls, mode:int) -> str:
@@ -229,11 +251,17 @@ class ListFiles(interfaces.plugins.PluginInterface):
         
         # get file info
         mode = ''
+        uid = -1
+        gid = -1
         if inode is not None:
             # get mode
             mode = cls._mode_to_str(inode.i_mode)
 
-        return mnt_id, inode_id, inode_addr, mode, path
+            # get uid and gid
+            uid = inode.i_uid.val
+            gid = inode.i_gid.val
+
+        return mnt_id, inode_id, inode_addr, mode, uid, gid, path
     
     @classmethod
     def _walk_dentry(cls,
@@ -314,6 +342,7 @@ class ListFiles(interfaces.plugins.PluginInterface):
     
     def _generator(self):
         path_filter = self.create_path_filter(self.config.get('path', None))
+        uid_filter = self.create_uid_filter(self.config.get('uid', None))
         pids = self.config.get('pid', None)
         if pids:
             pid_filter = pslist.PsList.create_pid_filter(pids)
@@ -339,11 +368,11 @@ class ListFiles(interfaces.plugins.PluginInterface):
             # info could not be extracted
             if info is None:
                 continue
-            mnt_id, inode_id, inode_addr, mode, file_path = info
+            mnt_id, inode_id, inode_addr, mode, uid, gid, file_path = info
 
             # path is not filtered out
-            if not path_filter(file_path):
-                files[file_path] = mnt_id, inode_id, inode_addr, mode, file_path
+            if not path_filter(file_path) and not uid_filter(uid):
+                files[file_path] = mnt_id, inode_id, inode_addr, mode, uid, gid, file_path
         
         paths = list(files.keys())
         if self.config.get('sort', None):
@@ -351,12 +380,12 @@ class ListFiles(interfaces.plugins.PluginInterface):
             paths.sort()
             vollog.info('done sorting')
         for path in paths:
-            mnt_id, inode_id, inode_addr, mode, file_path = files[path]
-            yield (0, (mnt_id, inode_id, format_hints.Hex(inode_addr), mode, file_path))
+            mnt_id, inode_id, inode_addr, mode, uid, gid, file_path = files[path]
+            yield (0, (mnt_id, inode_id, format_hints.Hex(inode_addr), mode, uid, gid, file_path))
     
     def run(self):
         # make sure 'all' and 'pid' aren't used together
         if self.config.get('all') and self.config.get('pid'):
             raise exceptions.PluginRequirementException('"pid" and "all" cannot be used together')
 
-        return renderers.TreeGrid([("Mount ID", int), ("Inode ID", int), ("Inode Address", format_hints.Hex), ("Mode", str), ("File Path", str)], self._generator())
+        return renderers.TreeGrid([('Mount ID', int), ('Inode ID', int), ('Inode Address', format_hints.Hex), ('Mode', str), ('UID', int), ('GID', int), ('File Path', str)], self._generator())
