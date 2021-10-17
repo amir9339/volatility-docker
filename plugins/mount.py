@@ -278,8 +278,8 @@ class Mount(interfaces.plugins.PluginInterface):
             yield (0, self.get_mount_info(mount))
     
     def run(self):
-        # make sure 'all' and 'pid' aren't specified together
+        # make sure 'all' and 'pid' aren't used together
         if self.config.get('all') and self.config.get('pid'):
-            raise ValueError('"pid" and "all" cannot be used together')
+            raise exceptions.PluginRequirementException('"pid" and "all" cannot be used together')
 
         return renderers.TreeGrid([('Mount ID', int), ('Parent ID', int), ('Devname', str), ('Path', str), ('Absolute Path', str), ('FS Type', str), ('Access', str), ('Flags', str)], self._generator())

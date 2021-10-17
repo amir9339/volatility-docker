@@ -7,7 +7,6 @@ import logging
 from volatility3.framework import renderers, interfaces
 from volatility3.framework.configuration import requirements
 from volatility3.framework.objects import utility
-from volatility3.framework.renderers.format_hints import MultiTypeData
 
 
 vollog = logging.getLogger(__name__)

@@ -5,6 +5,7 @@ from volatility3.framework import renderers, interfaces, symbols, constants
 from volatility3.framework.configuration import requirements
 from volatility3.framework.renderers import format_hints
 from volatility3.plugins.linux import mount as mount_plugin
+from volatility3.plugins.linux import pslist
 from volatility3.framework import exceptions
 
 
@@ -39,20 +40,23 @@ class ListFiles(interfaces.plugins.PluginInterface):
             requirements.ModuleRequirement(name='kernel',
                                            description='Linux kernel',
                                            architectures=['Intel32', 'Intel64']),
+            requirements.PluginRequirement(name='pslist',
+                                           plugin=pslist.PsList,
+                                           version=(2, 0, 0)),
             requirements.PluginRequirement(name='mount',
                                            plugin=mount_plugin.Mount,
                                            version=(1, 0, 0)),
+            requirements.ListRequirement(name='pid',
+                                         description='Use mounts from the mount namespaces of the specified PIDs',
+                                         element_type=int,
+                                         optional=True),
             requirements.ListRequirement(name='mount',
-                                         description='Filter on specific FS mounts by mount ID',
+                                         description='Filter on specific mounts by mount ID',
                                          element_type=int,
                                          optional=True),
             requirements.StringRequirement(name='path',
                                            description='List files under a specified path',
                                            optional=True),
-            requirements.BooleanRequirement(name='all',
-                                            description='List files from all mounts (default uses only "effective" mounts)',
-                                            optional=True,
-                                            default=False),
             requirements.BooleanRequirement(name='sort',
                                             description='Sort files by path',
                                             optional=True,
@@ -160,25 +164,25 @@ class ListFiles(interfaces.plugins.PluginInterface):
     def get_dentries(cls,
                      context: interfaces.context.ContextInterface,
                      vmlinux_module_name: str,
-                     mnt_filter: Callable[[Any], bool] = lambda _: False,
-                     all: bool = False) -> Tuple[symbols.linux.extensions.mount, List[symbols.linux.extensions.dentry]]:
+                     pid_filter: Callable[[Any], bool] = None,
+                     mnt_filter: Callable[[Any], bool] = lambda _: False) -> Tuple[symbols.linux.extensions.mount, List[symbols.linux.extensions.dentry]]:
         """Get a list of all cached dentries in the filesystem that match the given filters."""
         vmlinux = context.modules[vmlinux_module_name]
 
         # list of dentries
         dentries = []
 
-        # iterate through all mounts
-        func = mount_plugin.Mount.get_all_mounts if all else mount_plugin.Mount.get_effective_mounts
-        mounts = func(context, vmlinux_module_name)
-        #num_mounts = len(mounts)
-        num_mounts = '?'
+        # get a list of mounts to use
+        if pid_filter is None:
+            non_filtered_mounts = mount_plugin.Mount.get_all_mounts(context, vmlinux_module_name)
+        else:
+            non_filtered_mounts = mount_plugin.Mount.get_mounts(context, vmlinux_module_name, pid_filter)
+        
+        # filter out mounts
+        mounts = [mount for mount in non_filtered_mounts if not mnt_filter(mount)]
+        num_mounts = len(mounts)
 
         for i, mount in enumerate(mounts):
-            # mount is filtered out
-            if mnt_filter(mount):
-                continue
-
             vollog.info(f'[{i}/{num_mounts}]  listing files for mount ID {mount.mnt_id}')
             
             # set of dentry addresses for this mount
@@ -199,12 +203,17 @@ class ListFiles(interfaces.plugins.PluginInterface):
     
     def _generator(self):
         path_filter = self.create_path_filter(self.config.get('path', None))
+        pids = self.config.get('pid', None)
+        if pids is not None:
+            pid_filter = pslist.PsList.create_pid_filter(pids)
+        else:
+            pid_filter = None
 
         files = dict()
         dentries = self.get_dentries(context=self.context,
                                      vmlinux_module_name=self.config['kernel'],
-                                     mnt_filter=self.create_mount_filter(self.config.get('mount', None)),
-                                     all=self.config.get('all', None))
+                                     pid_filter=pid_filter,
+                                     mnt_filter=self.create_mount_filter(self.config.get('mount', None)))
         num_dentries = len(dentries)
         for i, (mount, dentry) in enumerate(dentries):
             # print info message every 1000 files
