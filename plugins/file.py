@@ -9,13 +9,6 @@ from volatility3.plugins.linux import pslist
 from volatility3.framework import exceptions
 
 
-"""
-TODO:
-    - extract file size
-    - extract created/modified/access times
-"""
-
-
 # inode types
 # see https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/stat.h
 S_IFMT   = 0o170000 # inode type mask
@@ -254,6 +247,9 @@ class ListFiles(interfaces.plugins.PluginInterface):
         uid = -1
         gid = -1
         size = -1
+        created = -1
+        modified = -1
+        accessed = -1
         if inode is not None:
             # get mode
             mode = cls._mode_to_str(inode.i_mode)
@@ -265,7 +261,12 @@ class ListFiles(interfaces.plugins.PluginInterface):
             # get size
             size = inode.i_size
 
-        return mnt_id, inode_id, inode_addr, mode, uid, gid, size, path
+            # get file times
+            created = inode.i_ctime.tv_sec
+            modified = inode.i_mtime.tv_sec
+            accessed = inode.i_atime.tv_sec
+
+        return mnt_id, inode_id, inode_addr, mode, uid, gid, size, created, modified, accessed, path
     
     @classmethod
     def _walk_dentry(cls,
@@ -372,11 +373,11 @@ class ListFiles(interfaces.plugins.PluginInterface):
             # info could not be extracted
             if info is None:
                 continue
-            mnt_id, inode_id, inode_addr, mode, uid, gid, size, file_path = info
+            mnt_id, inode_id, inode_addr, mode, uid, gid, size, created, modified, accessed, file_path = info
 
             # path is not filtered out
             if not path_filter(file_path) and not uid_filter(uid):
-                files[file_path] = mnt_id, inode_id, inode_addr, mode, uid, gid, size, file_path
+                files[file_path] = mnt_id, inode_id, inode_addr, mode, uid, gid, size, created, modified, accessed, file_path
         
         paths = list(files.keys())
         if self.config.get('sort', None):
@@ -384,12 +385,12 @@ class ListFiles(interfaces.plugins.PluginInterface):
             paths.sort()
             vollog.info('done sorting')
         for path in paths:
-            mnt_id, inode_id, inode_addr, mode, uid, gid, size, file_path = files[path]
-            yield (0, (mnt_id, inode_id, format_hints.Hex(inode_addr), mode, uid, gid, size, file_path))
+            mnt_id, inode_id, inode_addr, mode, uid, gid, size, created, modified, accessed, file_path = files[path]
+            yield (0, (mnt_id, inode_id, format_hints.Hex(inode_addr), mode, uid, gid, size, created, modified, accessed, file_path))
     
     def run(self):
         # make sure 'all' and 'pid' aren't used together
         if self.config.get('all') and self.config.get('pid'):
             raise exceptions.PluginRequirementException('"pid" and "all" cannot be used together')
 
-        return renderers.TreeGrid([('Mount ID', int), ('Inode ID', int), ('Inode Address', format_hints.Hex), ('Mode', str), ('UID', int), ('GID', int), ('Size', int), ('File Path', str)], self._generator())
+        return renderers.TreeGrid([('Mount ID', int), ('Inode ID', int), ('Inode Address', format_hints.Hex), ('Mode', str), ('UID', int), ('GID', int), ('Size', int), ('Created', int), ('Modified', int), ('Accessed', int), ('File Path', str)], self._generator())
