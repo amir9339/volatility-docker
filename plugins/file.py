@@ -19,10 +19,38 @@ TODO:
 """
 
 
-# masks for determining if an inode is a directory
-# see https://elixir.bootlin.com/linux/v5.15-rc5/source/include/uapi/linux/stat.h
-S_IFMT  = 0xf000
-S_IFDIR = 0x4000
+# inode types
+# see https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/stat.h
+S_IFMT   = 0o170000 # inode type mask
+S_IFSOCK = 0o140000 # socket
+S_IFLNK  = 0o120000 # symbolic link
+S_IFREG  = 0o100000 # regular file
+S_IFBLK  = 0o60000  # block device
+S_IFDIR  = 0o40000  # directory
+S_IFCHR  = 0o20000  # character device
+S_IFIFO  = 0o10000  # fifo (pipe)
+S_ISUID  = 0o4000
+S_ISGID  = 0o2000
+S_ISVTX  = 0o1000
+
+# user permissions
+S_IRWXU = 0o700 # user permissions mask
+S_IRUSR = 0o400 # user read
+S_IWUSR = 0o200 # user write
+S_IXUSR = 0o100 # user execute
+
+# group permissions
+S_IRWXG = 0o070 # group permissions mask
+S_IRGRP = 0o040 # group read
+S_IWGRP = 0o020 # group write
+S_IXGRP = 0o010 # group execute
+
+# other permissions
+S_IRWXO = 0o007 # other permissions mask
+S_IROTH = 0o004 # other read
+S_IWOTH = 0o002 # other write
+S_IXOTH = 0o001 # other execute
+
 
 vollog = logging.getLogger(__name__)
 
@@ -47,20 +75,22 @@ class ListFiles(interfaces.plugins.PluginInterface):
                                            plugin=mount_plugin.Mount,
                                            version=(1, 0, 0)),
             requirements.ListRequirement(name='pid',
-                                         description='Use mounts from the mount namespaces of the specified PIDs',
+                                         description='List files from the mount namespaces of the specified PIDs',
                                          element_type=int,
                                          optional=True),
             requirements.ListRequirement(name='mount',
                                          description='Filter on specific mounts by mount ID',
                                          element_type=int,
                                          optional=True),
+            requirements.BooleanRequirement(name='all',
+                                            description='List files from all mounts',
+                                            optional=True),
             requirements.StringRequirement(name='path',
                                            description='List files under a specified path',
                                            optional=True),
             requirements.BooleanRequirement(name='sort',
                                             description='Sort files by path',
-                                            optional=True,
-                                            default=True)
+                                            optional=True)
         ]
     
     @classmethod
@@ -101,6 +131,71 @@ class ListFiles(interfaces.plugins.PluginInterface):
         return filter_func
 
     @classmethod
+    def _mode_to_str(cls, mode:int) -> str:
+        """Calculate the mode string (see http://cvsweb.netbsd.org/bsdweb.cgi/src/lib/libc/string/strmode.c?rev=1.16&content-type=text/x-cvsweb-markup)"""
+        string = ''
+
+        # get file type character
+        filetype = mode & S_IFMT
+        if filetype & S_IFDIR:
+            string += 'd'
+        elif filetype & S_IFCHR:
+            string += 'c'
+        elif filetype & S_IFBLK:
+            string += 'b'
+        elif filetype & S_IFREG:
+            string += '-'
+        elif filetype & S_IFLNK:
+            string += 'l'
+        elif filetype & S_IFSOCK:
+            string += 's'
+        elif filetype & S_IFIFO:
+            string += 'p'
+        else:
+            string += '?'
+        
+        # get user permissions
+        string += 'r' if mode & S_IRUSR else '-'
+        string += 'w' if mode & S_IWUSR else '-'
+        user_execute = mode & (S_IXUSR | S_ISUID)
+        if user_execute == 0:
+            string += '-'
+        elif user_execute == S_IXUSR:
+            string += 'x'
+        elif user_execute == S_ISUID:
+            string += 'S'
+        elif user_execute == S_IXUSR | S_ISUID:
+            string += 's'
+        
+        # get group permissions
+        string += 'r' if mode & S_IRGRP else '-'
+        string += 'w' if mode & S_IWGRP else '-'
+        group_execute = mode & (S_IXGRP | S_ISGID)
+        if group_execute == 0:
+            string += '-'
+        elif group_execute == S_IXGRP:
+            string += 'x'
+        elif group_execute == S_ISGID:
+            string += 'S'
+        elif group_execute == S_IXGRP | S_ISGID:
+            string += 's'
+
+        # get other permissions
+        string += 'r' if mode & S_IROTH else '-'
+        string += 'w' if mode & S_IWOTH else '-'
+        other_execute = mode & (S_IXOTH | S_ISVTX)
+        if other_execute == 0:
+            string += '-'
+        elif other_execute == S_IXOTH:
+            string += 'x'
+        elif other_execute == S_ISVTX:
+            string += 'T'
+        elif other_execute == S_IXOTH | S_ISVTX:
+            string += 't'
+
+        return string
+
+    @classmethod
     def get_file_info(cls,
                       mount: symbols.linux.extensions.mount,
                       dentry: symbols.linux.extensions.dentry) -> Union[None, Tuple[int, int, int, str]]:
@@ -125,12 +220,20 @@ class ListFiles(interfaces.plugins.PluginInterface):
         try:
             inode_id = dentry.d_inode.dereference().i_ino
             inode_addr = int(dentry.d_inode)
+            inode = dentry.d_inode.dereference()
         # bad inode
         except exceptions.PagedInvalidAddressException:
             inode_id = -1
             inode_addr = 0
+            inode = None
+        
+        # get file info
+        mode = ''
+        if inode is not None:
+            # get mode
+            mode = cls._mode_to_str(inode.i_mode)
 
-        return mnt_id, inode_id, inode_addr, path
+        return mnt_id, inode_id, inode_addr, mode, path
     
     @classmethod
     def _walk_dentry(cls,
@@ -165,15 +268,23 @@ class ListFiles(interfaces.plugins.PluginInterface):
                      context: interfaces.context.ContextInterface,
                      vmlinux_module_name: str,
                      pid_filter: Callable[[Any], bool] = None,
-                     mnt_filter: Callable[[Any], bool] = lambda _: False) -> Tuple[symbols.linux.extensions.mount, List[symbols.linux.extensions.dentry]]:
+                     mnt_filter: Callable[[Any], bool] = lambda _: False,
+                     all:bool = False) -> Tuple[symbols.linux.extensions.mount, List[symbols.linux.extensions.dentry]]:
         """Get a list of all cached dentries in the filesystem that match the given filters."""
+        # make sure pid_filter and all aren't used together
+        if all and pid_filter is not None:
+            raise ValueError('all option cannot be used with a PID filter')
+
         vmlinux = context.modules[vmlinux_module_name]
 
         # list of dentries
         dentries = []
 
         # get a list of mounts to use
-        if pid_filter is None:
+        if not all and pid_filter is None:
+            pid_filter = pslist.PsList.create_pid_filter([1])
+
+        if all:
             non_filtered_mounts = mount_plugin.Mount.get_all_mounts(context, vmlinux_module_name)
         else:
             non_filtered_mounts = mount_plugin.Mount.get_mounts(context, vmlinux_module_name, pid_filter)
@@ -204,16 +315,20 @@ class ListFiles(interfaces.plugins.PluginInterface):
     def _generator(self):
         path_filter = self.create_path_filter(self.config.get('path', None))
         pids = self.config.get('pid', None)
-        if pids is not None:
+        if pids:
             pid_filter = pslist.PsList.create_pid_filter(pids)
         else:
             pid_filter = None
+        all = self.config.get('all', False)
+        if self.config.get('mount') and not pids:
+            all = True
 
         files = dict()
         dentries = self.get_dentries(context=self.context,
                                      vmlinux_module_name=self.config['kernel'],
                                      pid_filter=pid_filter,
-                                     mnt_filter=self.create_mount_filter(self.config.get('mount', None)))
+                                     mnt_filter=self.create_mount_filter(self.config.get('mount', None)),
+                                     all=all)
         num_dentries = len(dentries)
         for i, (mount, dentry) in enumerate(dentries):
             # print info message every 1000 files
@@ -224,11 +339,11 @@ class ListFiles(interfaces.plugins.PluginInterface):
             # info could not be extracted
             if info is None:
                 continue
-            mnt_id, inode_id, inode_addr, file_path = info
+            mnt_id, inode_id, inode_addr, mode, file_path = info
 
             # path is not filtered out
             if not path_filter(file_path):
-                files[file_path] = mnt_id, inode_id, inode_addr, file_path
+                files[file_path] = mnt_id, inode_id, inode_addr, mode, file_path
         
         paths = list(files.keys())
         if self.config.get('sort', None):
@@ -236,8 +351,12 @@ class ListFiles(interfaces.plugins.PluginInterface):
             paths.sort()
             vollog.info('done sorting')
         for path in paths:
-            mnt_id, inode_id, inode_addr, file_path = files[path]
-            yield (0, (mnt_id, inode_id, format_hints.Hex(inode_addr), file_path))
+            mnt_id, inode_id, inode_addr, mode, file_path = files[path]
+            yield (0, (mnt_id, inode_id, format_hints.Hex(inode_addr), mode, file_path))
     
     def run(self):
-        return renderers.TreeGrid([("Mount ID", int), ("Inode ID", int), ("Inode Address", format_hints.Hex), ("File Path", str)], self._generator())
+        # make sure 'all' and 'pid' aren't used together
+        if self.config.get('all') and self.config.get('pid'):
+            raise exceptions.PluginRequirementException('"pid" and "all" cannot be used together')
+
+        return renderers.TreeGrid([("Mount ID", int), ("Inode ID", int), ("Inode Address", format_hints.Hex), ("Mode", str), ("File Path", str)], self._generator())
