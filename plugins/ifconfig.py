@@ -17,11 +17,11 @@ class Ifconfig(interfaces.plugins.PluginInterface):
 
     _required_framework_version = (2, 0, 0)
 
-    _version = (2, 0, 0)
+    _version = (1, 0, 0)
 
     @classmethod
-    def _get_devices_namespaces(
-        self,         
+    def get_devices_namespaces(
+        cls,         
         context: interfaces.context.ContextInterface,
         vmlinux_module_name: str):
         """ 
@@ -46,7 +46,7 @@ class Ifconfig(interfaces.plugins.PluginInterface):
                     yield interface
     
     @classmethod
-    def _get_devs_base(self,         
+    def _get_devs_base(cls,
         context: interfaces.context.ContextInterface,
         vmlinux_module_name: str):
         """
@@ -61,9 +61,8 @@ class Ifconfig(interfaces.plugins.PluginInterface):
         for net_dev in net_device.dev_list:
             yield net_dev
 
-
-
-    def _parse_mac_addr_from_net_dev(self, net_dev):
+    @classmethod
+    def _parse_mac_addr_from_net_dev(cls, net_dev):
         """ 
         This func gets a net_dev object and returns an MAC asdress in a standard format.
         It only parses perm_addr array from net_device struct 
@@ -74,14 +73,16 @@ class Ifconfig(interfaces.plugins.PluginInterface):
             hwaddr = net_dev.perm_addr
             return ":".join(["{0:02x}".format(x) for x in hwaddr][:6]) # Join address in the standard format    
     
-    def _parse_promisc_mode_from_net_dev(self, net_dev):
+    @classmethod
+    def _parse_promisc_mode_from_net_dev(cls, net_dev):
         """ 
         This function returns True if the device is in promiscous mode and False if its not
         The function checks the flags that are an int property of net_device struct
         """
         return net_dev.flags & 0x100 == 0x100
     
-    def _parse_ifa_value(self, net_dev):
+    @classmethod
+    def _parse_ifa_value(cls, net_dev):
         """ 
         This function handles ifa_list - (Interfaces list) of a net_device object
         It walk on each member in the list and returns it's IP address and it's name (label) 
@@ -104,17 +105,17 @@ class Ifconfig(interfaces.plugins.PluginInterface):
             return (name, ip_addr)
         return "", ""
 
-
-    def _gather_net_dev_info(self, net_dev):
+    @classmethod
+    def _gather_net_dev_info(cls, net_dev):
         """ 
         This function gets a net_dev object and tries to extract the data from it using other functions.
         If its get an "Invalid Page" exception it does nothing :()
         """
 
         try:
-            mac_addr = self._parse_mac_addr_from_net_dev(net_dev)
-            promisc = str(self._parse_promisc_mode_from_net_dev(net_dev))            
-            name, ip_addr = self._parse_ifa_value(net_dev)
+            mac_addr = cls._parse_mac_addr_from_net_dev(net_dev)
+            promisc = str(cls._parse_promisc_mode_from_net_dev(net_dev))            
+            name, ip_addr = cls._parse_ifa_value(net_dev)
         except exceptions.PagedInvalidAddressException:
             pass
                 
@@ -127,8 +128,9 @@ class Ifconfig(interfaces.plugins.PluginInterface):
     @classmethod
     def get_requirements(cls) -> List[interfaces.configuration.RequirementInterface]:
         return [
-            requirements.ModuleRequirement(name = 'kernel', description = 'Linux kernel',
-                                           architectures = ["Intel32", "Intel64"]),
+            requirements.ModuleRequirement(name='kernel',
+                                            description='Linux kernel',
+                                            architectures=['Intel32', 'Intel64']),
         ]
 
     def _generator(self):
@@ -138,7 +140,7 @@ class Ifconfig(interfaces.plugins.PluginInterface):
         
         # Newer kernels
         if vmlinux.has_symbol("net_namespace_list"):
-            func = self._get_devices_namespaces
+            func = self.get_devices_namespaces
         elif vmlinux.has_symbol("dev_base"):
             func = self._get_devs_base
         else:
