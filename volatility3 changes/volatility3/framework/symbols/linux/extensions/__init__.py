@@ -413,6 +413,7 @@ class dentry(objects.StructType):
             root = root.d_parent.dereference()
         return root
 
+
 class struct_file(objects.StructType):
 
     def get_dentry(self) -> interfaces.objects.ObjectInterface:
@@ -594,6 +595,7 @@ class mount(objects.StructType):
             return self.mnt_namespace
         else:
             raise AttributeError('Unable to find mount -> mount namespace')
+
 
 class vfsmount(objects.StructType):
 

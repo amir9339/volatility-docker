@@ -69,11 +69,11 @@ class ListFiles(interfaces.plugins.PluginInterface):
                                          element_type=int,
                                          optional=True),
             requirements.ListRequirement(name='mount',
-                                         description='Filter on specific mounts by mount ID',
+                                         description='Filter by mount ID',
                                          element_type=int,
                                          optional=True),
             requirements.BooleanRequirement(name='all',
-                                            description='List files from all mounts',
+                                            description='List files from all mounts (cannot be used with --pid)',
                                             optional=True),
             requirements.StringRequirement(name='path',
                                            description='List files under a specified path',
@@ -213,10 +213,10 @@ class ListFiles(interfaces.plugins.PluginInterface):
     @classmethod
     def get_file_info(cls,
                       mount: symbols.linux.extensions.mount,
-                      dentry: symbols.linux.extensions.dentry) -> Union[None, Tuple[int, int, int, str]]:
+                      dentry: symbols.linux.extensions.dentry) -> Union[None, Tuple[int, int, int, str, int, int, int, int, int, int, str]]:
         """
         Parse a mount and dentry pair and return the following tuple:
-        mount_id, inode_id, inode_address, file_path
+        mount_id, inode_id, inode_address, mode, uid, gid, size, created, modified, accessed, file_path
         """
         # get file path
         sb = mount.get_mnt_sb()
@@ -346,24 +346,34 @@ class ListFiles(interfaces.plugins.PluginInterface):
         return dentries
     
     def _generator(self):
+        # create path and UID filters
         path_filter = self.create_path_filter(self.config.get('path', None))
         uid_filter = self.create_uid_filter(self.config.get('uid', None))
+
+        # create PID filter
         pids = self.config.get('pid', None)
         if pids:
             pid_filter = pslist.PsList.create_pid_filter(pids)
         else:
             pid_filter = None
+        
+        # get 'all' parameter
         all = self.config.get('all', False)
+        # if a mount list was specified but PID list wasn't, extract all mounts to search for the requested mounts
         if self.config.get('mount') and not pids:
             all = True
 
         files = dict()
+
+        # extract all dentries that match the PID/mount/all parameters
         dentries = self.get_dentries(context=self.context,
                                      vmlinux_module_name=self.config['kernel'],
                                      pid_filter=pid_filter,
                                      mnt_filter=self.create_mount_filter(self.config.get('mount', None)),
                                      all=all)
         num_dentries = len(dentries)
+
+        # iterate through dentries, extract file info and apply path and UID filters
         for i, (mount, dentry) in enumerate(dentries):
             # print info message every 1000 files
             if i % 1000 == 0:
@@ -375,11 +385,12 @@ class ListFiles(interfaces.plugins.PluginInterface):
                 continue
             mnt_id, inode_id, inode_addr, mode, uid, gid, size, created, modified, accessed, file_path = info
 
-            # path is not filtered out
+            # apply path and UID filters
             if not path_filter(file_path) and not uid_filter(uid):
                 files[file_path] = mnt_id, inode_id, inode_addr, mode, uid, gid, size, created, modified, accessed, file_path
         
         paths = list(files.keys())
+        # sort files by path
         if self.config.get('sort', None):
             vollog.info('sorting files')
             paths.sort()

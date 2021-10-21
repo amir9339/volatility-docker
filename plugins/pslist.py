@@ -127,7 +127,6 @@ class PsList(interfaces.plugins.PluginInterface):
                     vollog.error('Unable to extract namespace information (no task -> nsproxy member)')
                     return
 
-
     @classmethod
     def list_tasks(
             cls,
