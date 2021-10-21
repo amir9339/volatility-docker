@@ -707,3 +707,11 @@ class net(GenericNamespace):
 
 class user_namespace(GenericNamespace):
     pass
+
+
+class kernel_cap_struct(objects.StructType):
+    def to_int(self):
+        val = 0
+        for i, u32 in enumerate(self.cap):
+            val += u32 << (i*32)
+        return val

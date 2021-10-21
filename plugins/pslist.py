@@ -1,15 +1,55 @@
 # This file is Copyright 2019 Volatility Foundation and licensed under the Volatility Software License 1.0
 # which is available at https://www.volatilityfoundation.org/license/vsl-v1.0
 #
-from typing import Callable, Iterable, List, Any
+from typing import Callable, Iterable, List, Any, Tuple
+from dataclasses import dataclass
 import logging
 
-from volatility3.framework import renderers, interfaces
+from volatility3.framework import renderers, interfaces, symbols
 from volatility3.framework.configuration import requirements
 from volatility3.framework.objects import utility
+from volatility3.framework.renderers import format_hints
 
 
 vollog = logging.getLogger(__name__)
+
+
+@dataclass
+class TaskInfo:
+    """Class that holds high level information about a task."""
+    # generic info
+    pid: int = -1
+    ppid: int = -1
+    name: str = ''
+
+    # namespace info
+    pid_in_ns: int = -1
+    uts_ns: int = -1
+    ipc_ns: int = -1
+    mnt_ns: int = -1
+    net_ns: int = -1
+    pid_ns: int = -1
+    user_ns: int = -1
+
+    # credinfo
+    real_uid: int = -1
+    real_gid: int = -1
+    eff_uid: int = -1
+    eff_gid: int = -1
+    cap_inh: int = -1
+    cap_prm: int = -1
+    cap_eff: int = -1
+    cap_bnd: int = -1
+
+    def tuple(self, nsinfo: bool = False, credinfo: bool = False):
+        lst = [self.pid, self.ppid, self.name]
+        if nsinfo:
+            lst.extend([self.pid_in_ns, self.uts_ns, self.ipc_ns, self.mnt_ns, self.net_ns, self.pid_ns, self.user_ns])
+        if credinfo:
+            lst.extend([self.real_uid, self.real_gid, self.eff_uid, self.eff_gid, format_hints.Hex(self.cap_inh),
+                        format_hints.Hex(self.cap_prm), format_hints.Hex(self.cap_eff), format_hints.Hex(self.cap_bnd)])
+        
+        return tuple(lst)
 
 
 class PsList(interfaces.plugins.PluginInterface):
@@ -22,14 +62,18 @@ class PsList(interfaces.plugins.PluginInterface):
     @classmethod
     def get_requirements(cls) -> List[interfaces.configuration.RequirementInterface]:
         return [
-            requirements.ModuleRequirement(name = 'kernel', description = 'Linux kernel',
-                                           architectures = ["Intel32", "Intel64"]),
-            requirements.ListRequirement(name = 'pid',
-                                         description = 'Filter on specific process IDs',
-                                         element_type = int,
+            requirements.ModuleRequirement(name='kernel', description='Linux kernel',
+                                           architectures=["Intel32", "Intel64"]),
+            requirements.ListRequirement(name='pid',
+                                         description='Filter on specific process IDs',
+                                         element_type=int,
                                          optional = True),
             requirements.BooleanRequirement(name='nsinfo',
                                             description='Display namespace information',
+                                            optional=True,
+                                            default=False),
+            requirements.BooleanRequirement(name='credinfo',
+                                            description='Display credentials and capability information',
                                             optional=True,
                                             default=False)
         ]
@@ -56,76 +100,99 @@ class PsList(interfaces.plugins.PluginInterface):
         else:
             return lambda _: False
 
+    @classmethod
+    def get_task_info(cls,
+                      task: symbols.linux.extensions.task_struct,
+                      nsinfo: bool = False,
+                      credinfo: bool = False) -> TaskInfo:
+        """Extract information about a task."""
+        info = TaskInfo()
+
+        # extract general info
+        info.pid = task.pid
+        info.ppid = 0
+        if task.parent:
+            info.ppid = task.parent.pid
+        info.name = utility.array_to_string(task.comm)
+        
+        # extract namespace information
+        if nsinfo:
+            # Get namespace IDs.
+            # This is full of try and excepts because different kernel versions
+            # have different available namespace types.
+            # If a certain namespace type does not exist, -1 is returned for its value.
+            if task.has_member('nsproxy'):
+                nsproxy = task.nsproxy.dereference()
+
+                # get uts namespace
+                try:
+                    info.uts_ns = nsproxy.get_uts_ns().get_inum()
+                except AttributeError:
+                    info.uts_ns = -1
+                
+                # get ipc namespace
+                try:
+                    info.ipc_ns = nsproxy.get_ipc_ns().get_inum()
+                except AttributeError:
+                    info.ipc_ns = -1
+
+                # get mount namespace
+                try:
+                    info.mnt_ns = nsproxy.get_mnt_ns().get_inum()
+                except AttributeError:
+                    info.mnt_ns = -1
+                
+                # get net namespace
+                try:
+                    info.net_ns = nsproxy.get_net_ns().get_inum()
+                except AttributeError:
+                    info.net_ns = -1
+                
+                # get pid namespace
+                try:
+                    info.pid_ns = task.get_pid_ns().get_inum()
+                except AttributeError:
+                    info.pid_ns = -1
+                
+                # get user namespace
+                try:
+                    info.user_ns = nsproxy.get_user_ns().get_inum()
+                except AttributeError:
+                    info.user_ns = -1
+                
+                # get pid from within the namespace
+                try:
+                    info.pid_in_ns = task.get_namespace_pid()
+                except AttributeError:
+                    info.pid_in_ns = -1
+            
+            # no task -> nsproxy
+            else:
+                vollog.error('Unable to extract namespace information (no task -> nsproxy member)')
+        
+        # extract credentials and capability information
+        if credinfo:
+            cred = task.cred.dereference()
+            info.real_uid = cred.uid.val
+            info.real_gid = cred.gid.val
+            info.eff_uid = cred.euid.val
+            info.eff_gid = cred.egid.val
+            info.cap_inh = cred.cap_inheritable.to_int()
+            info.cap_prm = cred.cap_permitted.to_int()
+            info.cap_eff = cred.cap_effective.to_int()
+            info.cap_bnd = cred.cap_bset.to_int()
+
+        return info
+
     def _generator(self):
+        nsinfo = self.config.get('nsinfo', False)
+        credinfo = self.config.get('credinfo', False)
+
         for task in self.list_tasks(self.context,
                                     self.config['kernel'],
                                     filter_func = self.create_pid_filter(self.config.get('pid', None))):
-            pid = task.pid
-            ppid = 0
-            if task.parent:
-                ppid = task.parent.pid
-            name = utility.array_to_string(task.comm)
-
-            # don't extract namespace info
-            if not self.config.get('nsinfo', False):
-                yield (0, (pid, ppid, name))
-            
-            else:
-                # Get namespace IDs.
-                # This is full of try and excepts because different kernel versions
-                # have different available namespace types.
-                # If a certain namespace type does not exist, -1 is returned for its value.
-                if task.has_member('nsproxy'):
-                    nsproxy = task.nsproxy.dereference()
-
-                    # get uts namespace
-                    try:
-                        uts_ns = nsproxy.get_uts_ns().get_inum()
-                    except AttributeError:
-                        uts_ns = -1
-                    
-                    # get ipc namespace
-                    try:
-                        ipc_ns = nsproxy.get_ipc_ns().get_inum()
-                    except AttributeError:
-                        ipc_ns = -1
-
-                    # get mount namespace
-                    try:
-                        mnt_ns = nsproxy.get_mnt_ns().get_inum()
-                    except AttributeError:
-                        mnt_ns = -1
-                    
-                    # get net namespace
-                    try:
-                        net_ns = nsproxy.get_net_ns().get_inum()
-                    except AttributeError:
-                        net_ns = -1
-                    
-                    # get pid namespace
-                    try:
-                        pid_ns = task.get_pid_ns().get_inum()
-                    except AttributeError:
-                        pid_ns = -1
-                    
-                    # get user namespace
-                    try:
-                        user_ns = nsproxy.get_user_ns().get_inum()
-                    except AttributeError:
-                        user_ns = -1
-                    
-                    # get pid from within the namespace
-                    try:
-                        namespace_pid = task.get_namespace_pid()
-                    except AttributeError:
-                        namespace_pid = -1
-                    
-                    yield (0, (pid, ppid, name, namespace_pid, uts_ns, ipc_ns, mnt_ns, net_ns, pid_ns, user_ns))
-                
-                # no task -> nsproxy
-                else:
-                    vollog.error('Unable to extract namespace information (no task -> nsproxy member)')
-                    return
+            taskinfo = self.get_task_info(task, nsinfo=nsinfo, credinfo=credinfo)
+            yield (0, taskinfo.tuple(nsinfo=nsinfo, credinfo=credinfo))
 
     @classmethod
     def list_tasks(
@@ -153,6 +220,14 @@ class PsList(interfaces.plugins.PluginInterface):
 
     def run(self):
         columns = [('PID', int), ('PPID', int), ('COMM', str)]
+
         if self.config.get('nsinfo', False):
-            columns.extend([('PID in NS', int), ('UTS NS', int), ('IPC NS', int), ('MNT NS', int), ('NET NS', int), ('PID NS', int), ('USER NS', int)])
+            columns.extend([('PID in NS', int), ('UTS NS', int), ('IPC NS', int),
+                            ('MNT NS', int), ('NET NS', int), ('PID NS', int), ('USER NS', int)])
+
+        if self.config.get('credinfo', False):
+            columns.extend([('Real UID', int), ('Real GID', int), ('Eff UID', int),
+                            ('Eff GID', int), ('CapInh', format_hints.Hex),
+                            ('CapPrm', format_hints.Hex), ('CapEff', format_hints.Hex), ('CapBnd', format_hints.Hex)])
+
         return renderers.TreeGrid(columns, self._generator())
