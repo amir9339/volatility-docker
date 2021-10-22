@@ -413,6 +413,7 @@ class dentry(objects.StructType):
             root = root.d_parent.dereference()
         return root
 
+
 class struct_file(objects.StructType):
 
     def get_dentry(self) -> interfaces.objects.ObjectInterface:
@@ -595,6 +596,7 @@ class mount(objects.StructType):
         else:
             raise AttributeError('Unable to find mount -> mount namespace')
 
+
 class vfsmount(objects.StructType):
 
     def is_valid(self):
@@ -705,3 +707,11 @@ class net(GenericNamespace):
 
 class user_namespace(GenericNamespace):
     pass
+
+
+class kernel_cap_struct(objects.StructType):
+    def to_int(self):
+        val = 0
+        for i, u32 in enumerate(self.cap):
+            val += u32 << (i*32)
+        return val
