@@ -1,0 +1,3776 @@
+
+[
+  {
+    "FD": 0,
+    "PID": 1,
+    "Path": "/dev/null",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 1,
+    "Path": "/dev/null",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 1,
+    "Path": "/dev/null",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 1,
+    "Path": "/dev/kmsg",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 1,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 1,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 1,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 1,
+    "Path": "/sys/fs/cgroup/unified",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 1,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 1,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 10,
+    "PID": 1,
+    "Path": "/proc/1/mountinfo",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 11,
+    "PID": 1,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 13,
+    "PID": 1,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 14,
+    "PID": 1,
+    "Path": "/proc/swaps",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 15,
+    "PID": 1,
+    "Path": "socket:[28931]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 16,
+    "PID": 1,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 17,
+    "PID": 1,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 18,
+    "PID": 1,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 19,
+    "PID": 1,
+    "Path": "socket:[28935]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 20,
+    "PID": 1,
+    "Path": "socket:[28937]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 21,
+    "PID": 1,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 22,
+    "PID": 1,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 23,
+    "PID": 1,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 24,
+    "PID": 1,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 25,
+    "PID": 1,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 26,
+    "PID": 1,
+    "Path": "/dev/autofs",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 28,
+    "PID": 1,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 29,
+    "PID": 1,
+    "Path": "socket:[28932]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 30,
+    "PID": 1,
+    "Path": "socket:[28933]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 44,
+    "PID": 1,
+    "Path": "socket:[29098]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 45,
+    "PID": 1,
+    "Path": "socket:[30016]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 56,
+    "PID": 1,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 64,
+    "PID": 1,
+    "Path": "socket:[35630]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 76,
+    "PID": 1,
+    "Path": "socket:[28934]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 81,
+    "PID": 1,
+    "Path": "socket:[28957]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 82,
+    "PID": 1,
+    "Path": "/dev/rfkill",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 83,
+    "PID": 1,
+    "Path": "socket:[144405]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 84,
+    "PID": 1,
+    "Path": "socket:[142983]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 85,
+    "PID": 1,
+    "Path": "socket:[45892]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 86,
+    "PID": 1,
+    "Path": "socket:[42978]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 87,
+    "PID": 1,
+    "Path": "socket:[39960]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 88,
+    "PID": 1,
+    "Path": "socket:[38564]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 89,
+    "PID": 1,
+    "Path": "socket:[38385]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 90,
+    "PID": 1,
+    "Path": "socket:[38384]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 91,
+    "PID": 1,
+    "Path": "socket:[38382]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 92,
+    "PID": 1,
+    "Path": "socket:[38380]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 93,
+    "PID": 1,
+    "Path": "socket:[35881]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 94,
+    "PID": 1,
+    "Path": "socket:[35880]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 95,
+    "PID": 1,
+    "Path": "socket:[34786]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 96,
+    "PID": 1,
+    "Path": "socket:[35210]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 97,
+    "PID": 1,
+    "Path": "socket:[35051]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 98,
+    "PID": 1,
+    "Path": "socket:[34211]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 99,
+    "PID": 1,
+    "Path": "socket:[34151]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 100,
+    "PID": 1,
+    "Path": "socket:[34093]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 101,
+    "PID": 1,
+    "Path": "socket:[33394]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 102,
+    "PID": 1,
+    "Path": "socket:[33175]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 103,
+    "PID": 1,
+    "Path": "socket:[34702]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 104,
+    "PID": 1,
+    "Path": "socket:[28948]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 105,
+    "PID": 1,
+    "Path": "socket:[28964]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 106,
+    "PID": 1,
+    "Path": "socket:[34703]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 107,
+    "PID": 1,
+    "Path": "socket:[34705]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 108,
+    "PID": 1,
+    "Path": "socket:[34707]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 109,
+    "PID": 1,
+    "Path": "socket:[28949]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 110,
+    "PID": 1,
+    "Path": "socket:[28963]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 111,
+    "PID": 1,
+    "Path": "socket:[144395]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 112,
+    "PID": 1,
+    "Path": "socket:[28946]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 113,
+    "PID": 1,
+    "Path": "socket:[34698]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 114,
+    "PID": 1,
+    "Path": "pipe:[28944]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 115,
+    "PID": 1,
+    "Path": "socket:[34709]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 116,
+    "PID": 1,
+    "Path": "/run/initctl",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 117,
+    "PID": 1,
+    "Path": "socket:[28959]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 118,
+    "PID": 1,
+    "Path": "socket:[28961]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 119,
+    "PID": 1,
+    "Path": "socket:[28966]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 120,
+    "PID": 1,
+    "Path": "/run/dmeventd-server",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 121,
+    "PID": 1,
+    "Path": "/run/dmeventd-client",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 122,
+    "PID": 1,
+    "Path": "socket:[28956]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 469,
+    "Path": "/dev/null",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 469,
+    "Path": "/dev/null",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 469,
+    "Path": "/dev/null",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 469,
+    "Path": "socket:[28959]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 469,
+    "Path": "socket:[28961]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 469,
+    "Path": "socket:[28956]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 469,
+    "Path": "socket:[28957]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 469,
+    "Path": "/dev/kmsg",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 469,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 469,
+    "Path": "/dev/kmsg",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 10,
+    "PID": 469,
+    "Path": "socket:[29372]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 11,
+    "PID": 469,
+    "Path": "/proc/sys/kernel/hostname",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 12,
+    "PID": 469,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 13,
+    "PID": 469,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 14,
+    "PID": 469,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 15,
+    "PID": 469,
+    "Path": "socket:[29374]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 16,
+    "PID": 469,
+    "Path": "socket:[33394]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 17,
+    "PID": 469,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 18,
+    "PID": 469,
+    "Path": "socket:[35051]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 19,
+    "PID": 469,
+    "Path": "socket:[33175]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 20,
+    "PID": 469,
+    "Path": "socket:[34151]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 21,
+    "PID": 469,
+    "Path": "socket:[34093]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 22,
+    "PID": 469,
+    "Path": "socket:[34211]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 23,
+    "PID": 469,
+    "Path": "/var/log/journal/f1079484452c44b799ca23d319e04853/system.journal",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 24,
+    "PID": 469,
+    "Path": "socket:[34786]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 25,
+    "PID": 469,
+    "Path": "socket:[35210]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 26,
+    "PID": 469,
+    "Path": "socket:[35880]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 27,
+    "PID": 469,
+    "Path": "socket:[38380]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 28,
+    "PID": 469,
+    "Path": "socket:[35881]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 29,
+    "PID": 469,
+    "Path": "/var/log/journal/f1079484452c44b799ca23d319e04853/user-1000.journal",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 30,
+    "PID": 469,
+    "Path": "socket:[38382]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 31,
+    "PID": 469,
+    "Path": "socket:[38384]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 32,
+    "PID": 469,
+    "Path": "socket:[38385]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 33,
+    "PID": 469,
+    "Path": "socket:[39960]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 34,
+    "PID": 469,
+    "Path": "socket:[42978]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 35,
+    "PID": 469,
+    "Path": "socket:[45892]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 36,
+    "PID": 469,
+    "Path": "socket:[38564]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 37,
+    "PID": 469,
+    "Path": "socket:[142983]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 38,
+    "PID": 469,
+    "Path": "socket:[144405]",
+    "Process": "systemd-journal",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 501,
+    "Path": "/dev/null",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 501,
+    "Path": "socket:[30724]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 501,
+    "Path": "socket:[30724]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 501,
+    "Path": "socket:[28966]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 501,
+    "Path": "socket:[28964]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 501,
+    "Path": "socket:[30733]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 501,
+    "Path": "socket:[30735]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 501,
+    "Path": "socket:[30736]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 501,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 501,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 10,
+    "PID": 501,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 11,
+    "PID": 501,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 12,
+    "PID": 501,
+    "Path": "/usr/lib/udev/hwdb.bin",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 13,
+    "PID": 501,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 664,
+    "Path": "/dev/null",
+    "Process": "multipathd",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 664,
+    "Path": "socket:[33393]",
+    "Process": "multipathd",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 664,
+    "Path": "socket:[33393]",
+    "Process": "multipathd",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 664,
+    "Path": "socket:[28948]",
+    "Process": "multipathd",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 664,
+    "Path": "/run/multipathd.pid",
+    "Process": "multipathd",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 664,
+    "Path": "/dev/sda",
+    "Process": "multipathd",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 664,
+    "Path": "/dev/mapper/control",
+    "Process": "multipathd",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 664,
+    "Path": "socket:[31923]",
+    "Process": "multipathd",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 706,
+    "Path": "/dev/null",
+    "Process": "systemd-timesyn",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 706,
+    "Path": "socket:[32308]",
+    "Process": "systemd-timesyn",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 706,
+    "Path": "socket:[32308]",
+    "Process": "systemd-timesyn",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 706,
+    "Path": "socket:[34278]",
+    "Process": "systemd-timesyn",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 706,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-timesyn",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 706,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-timesyn",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 706,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-timesyn",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 706,
+    "Path": "socket:[34280]",
+    "Process": "systemd-timesyn",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 706,
+    "Path": "socket:[34281]",
+    "Process": "systemd-timesyn",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 706,
+    "Path": "socket:[34282]",
+    "Process": "systemd-timesyn",
+    "__children": []
+  },
+  {
+    "FD": 10,
+    "PID": 706,
+    "Path": "socket:[34283]",
+    "Process": "systemd-timesyn",
+    "__children": []
+  },
+  {
+    "FD": 11,
+    "PID": 706,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-timesyn",
+    "__children": []
+  },
+  {
+    "FD": 12,
+    "PID": 706,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-timesyn",
+    "__children": []
+  },
+  {
+    "FD": 13,
+    "PID": 706,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-timesyn",
+    "__children": []
+  },
+  {
+    "FD": 14,
+    "PID": 706,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-timesyn",
+    "__children": []
+  },
+  {
+    "FD": 15,
+    "PID": 706,
+    "Path": "socket:[34700]",
+    "Process": "systemd-timesyn",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 709,
+    "Path": "/dev/null",
+    "Process": "VGAuthService",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 709,
+    "Path": "socket:[34150]",
+    "Process": "VGAuthService",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 709,
+    "Path": "socket:[34150]",
+    "Process": "VGAuthService",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 709,
+    "Path": "socket:[34397]",
+    "Process": "VGAuthService",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 709,
+    "Path": "pipe:[34423]",
+    "Process": "VGAuthService",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 709,
+    "Path": "pipe:[34423]",
+    "Process": "VGAuthService",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 709,
+    "Path": "anon_inode:[11519]",
+    "Process": "VGAuthService",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 709,
+    "Path": "socket:[34435]",
+    "Process": "VGAuthService",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 710,
+    "Path": "/dev/null",
+    "Process": "vmtoolsd",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 710,
+    "Path": "socket:[34209]",
+    "Process": "vmtoolsd",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 710,
+    "Path": "socket:[34209]",
+    "Process": "vmtoolsd",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 710,
+    "Path": "/var/log/vmware-vmsvc-root.log",
+    "Process": "vmtoolsd",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 710,
+    "Path": "anon_inode:[11519]",
+    "Process": "vmtoolsd",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 710,
+    "Path": "pipe:[34347]",
+    "Process": "vmtoolsd",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 710,
+    "Path": "pipe:[34347]",
+    "Process": "vmtoolsd",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 710,
+    "Path": "anon_inode:[11519]",
+    "Process": "vmtoolsd",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 710,
+    "Path": "socket:[34409]",
+    "Process": "vmtoolsd",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 791,
+    "Path": "/dev/null",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 791,
+    "Path": "socket:[35049]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 791,
+    "Path": "socket:[35049]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 791,
+    "Path": "socket:[28963]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 791,
+    "Path": "socket:[35052]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 791,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 791,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 791,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 791,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 791,
+    "Path": "socket:[35054]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 10,
+    "PID": 791,
+    "Path": "socket:[35055]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 11,
+    "PID": 791,
+    "Path": "socket:[35056]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 12,
+    "PID": 791,
+    "Path": "socket:[35057]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 13,
+    "PID": 791,
+    "Path": "socket:[35058]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 14,
+    "PID": 791,
+    "Path": "socket:[35059]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 15,
+    "PID": 791,
+    "Path": "socket:[164754]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 16,
+    "PID": 791,
+    "Path": "socket:[34616]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 17,
+    "PID": 791,
+    "Path": "socket:[34627]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 18,
+    "PID": 791,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 20,
+    "PID": 791,
+    "Path": "socket:[34701]",
+    "Process": "systemd-network",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 802,
+    "Path": "/dev/null",
+    "Process": "systemd-resolve",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 802,
+    "Path": "socket:[35209]",
+    "Process": "systemd-resolve",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 802,
+    "Path": "socket:[35209]",
+    "Process": "systemd-resolve",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 802,
+    "Path": "socket:[35215]",
+    "Process": "systemd-resolve",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 802,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-resolve",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 802,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-resolve",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 802,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-resolve",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 802,
+    "Path": "/proc/sys/sys/kernel/hostname",
+    "Process": "systemd-resolve",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 802,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-resolve",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 802,
+    "Path": "socket:[35265]",
+    "Process": "systemd-resolve",
+    "__children": []
+  },
+  {
+    "FD": 10,
+    "PID": 802,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-resolve",
+    "__children": []
+  },
+  {
+    "FD": 11,
+    "PID": 802,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-resolve",
+    "__children": []
+  },
+  {
+    "FD": 12,
+    "PID": 802,
+    "Path": "socket:[35268]",
+    "Process": "systemd-resolve",
+    "__children": []
+  },
+  {
+    "FD": 13,
+    "PID": 802,
+    "Path": "socket:[35269]",
+    "Process": "systemd-resolve",
+    "__children": []
+  },
+  {
+    "FD": 14,
+    "PID": 802,
+    "Path": "socket:[35414]",
+    "Process": "systemd-resolve",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 816,
+    "Path": "/dev/null",
+    "Process": "accounts-daemon",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 816,
+    "Path": "socket:[34785]",
+    "Process": "accounts-daemon",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 816,
+    "Path": "socket:[34785]",
+    "Process": "accounts-daemon",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 816,
+    "Path": "anon_inode:[11519]",
+    "Process": "accounts-daemon",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 816,
+    "Path": "anon_inode:[11519]",
+    "Process": "accounts-daemon",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 816,
+    "Path": "socket:[38420]",
+    "Process": "accounts-daemon",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 816,
+    "Path": "anon_inode:[11519]",
+    "Process": "accounts-daemon",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 816,
+    "Path": "anon_inode:[11519]",
+    "Process": "accounts-daemon",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 819,
+    "Path": "/dev/null",
+    "Process": "cron",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 819,
+    "Path": "socket:[35879]",
+    "Process": "cron",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 819,
+    "Path": "socket:[35879]",
+    "Process": "cron",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 819,
+    "Path": "/run/crond.pid",
+    "Process": "cron",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 819,
+    "Path": "socket:[35883]",
+    "Process": "cron",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 820,
+    "Path": "/dev/null",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 820,
+    "Path": "socket:[35699]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 820,
+    "Path": "socket:[35699]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 820,
+    "Path": "socket:[34698]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 820,
+    "Path": "anon_inode:[11519]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 820,
+    "Path": "socket:[38444]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 820,
+    "Path": "socket:[38447]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 820,
+    "Path": "anon_inode:[11519]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 820,
+    "Path": "socket:[38454]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 820,
+    "Path": "socket:[38455]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 10,
+    "PID": 820,
+    "Path": "socket:[38456]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 11,
+    "PID": 820,
+    "Path": "socket:[38457]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 12,
+    "PID": 820,
+    "Path": "socket:[38458]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 13,
+    "PID": 820,
+    "Path": "socket:[38459]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 14,
+    "PID": 820,
+    "Path": "socket:[38460]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 15,
+    "PID": 820,
+    "Path": "socket:[38461]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 16,
+    "PID": 820,
+    "Path": "socket:[38462]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 17,
+    "PID": 820,
+    "Path": "socket:[38610]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 18,
+    "PID": 820,
+    "Path": "socket:[38830]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 20,
+    "PID": 820,
+    "Path": "socket:[41296]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 21,
+    "PID": 820,
+    "Path": "socket:[46558]",
+    "Process": "dbus-daemon",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 827,
+    "Path": "/dev/null",
+    "Process": "irqbalance",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 827,
+    "Path": "socket:[36948]",
+    "Process": "irqbalance",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 827,
+    "Path": "socket:[36948]",
+    "Process": "irqbalance",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 827,
+    "Path": "anon_inode:[11519]",
+    "Process": "irqbalance",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 827,
+    "Path": "anon_inode:[11519]",
+    "Process": "irqbalance",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 827,
+    "Path": "socket:[38327]",
+    "Process": "irqbalance",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 828,
+    "Path": "/dev/null",
+    "Process": "networkd-dispat",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 828,
+    "Path": "socket:[36447]",
+    "Process": "networkd-dispat",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 828,
+    "Path": "socket:[36447]",
+    "Process": "networkd-dispat",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 828,
+    "Path": "socket:[38419]",
+    "Process": "networkd-dispat",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 828,
+    "Path": "anon_inode:[11519]",
+    "Process": "networkd-dispat",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 828,
+    "Path": "socket:[38586]",
+    "Process": "networkd-dispat",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 828,
+    "Path": "socket:[38587]",
+    "Process": "networkd-dispat",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 830,
+    "Path": "/dev/null",
+    "Process": "rsyslogd",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 830,
+    "Path": "/dev/null",
+    "Process": "rsyslogd",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 830,
+    "Path": "/dev/null",
+    "Process": "rsyslogd",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 830,
+    "Path": "socket:[28949]",
+    "Process": "rsyslogd",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 830,
+    "Path": "/dev/urandom",
+    "Process": "rsyslogd",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 830,
+    "Path": "/proc/kmsg",
+    "Process": "rsyslogd",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 830,
+    "Path": "socket:[38352]",
+    "Process": "rsyslogd",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 830,
+    "Path": "/var/log/syslog",
+    "Process": "rsyslogd",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 830,
+    "Path": "/var/log/auth.log",
+    "Process": "rsyslogd",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 830,
+    "Path": "/var/log/kern.log",
+    "Process": "rsyslogd",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 832,
+    "Path": "/dev/null",
+    "Process": "snapd",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 832,
+    "Path": "socket:[36662]",
+    "Process": "snapd",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 832,
+    "Path": "socket:[36662]",
+    "Process": "snapd",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 832,
+    "Path": "socket:[40512]",
+    "Process": "snapd",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 832,
+    "Path": "pipe:[40513]",
+    "Process": "snapd",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 832,
+    "Path": "pipe:[40513]",
+    "Process": "snapd",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 832,
+    "Path": "anon_inode:[11519]",
+    "Process": "snapd",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 832,
+    "Path": "socket:[34705]",
+    "Process": "snapd",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 832,
+    "Path": "socket:[34707]",
+    "Process": "snapd",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 834,
+    "Path": "/dev/null",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 834,
+    "Path": "socket:[36737]",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 834,
+    "Path": "socket:[36737]",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 834,
+    "Path": "socket:[38338]",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 834,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 834,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 834,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 834,
+    "Path": "/sys/devices/virtual/tty/tty0/active",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 834,
+    "Path": "socket:[38345]",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 834,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 10,
+    "PID": 834,
+    "Path": "/run/systemd/inhibit/inhibit/1.ref",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 11,
+    "PID": 834,
+    "Path": "socket:[38346]",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 12,
+    "PID": 834,
+    "Path": "socket:[38347]",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 13,
+    "PID": 834,
+    "Path": "socket:[38348]",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 14,
+    "PID": 834,
+    "Path": "socket:[38349]",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 15,
+    "PID": 834,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 16,
+    "PID": 834,
+    "Path": "/dev/input/event0",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 17,
+    "PID": 834,
+    "Path": "/dev/input/event1",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 18,
+    "PID": 834,
+    "Path": "/dev/tty6",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 19,
+    "PID": 834,
+    "Path": "/run/systemd/sessions/sessions/1.ref",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 20,
+    "PID": 834,
+    "Path": "/run/systemd/sessions/sessions/3.ref",
+    "Process": "systemd-logind",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 838,
+    "Path": "/dev/null",
+    "Process": "atd",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 838,
+    "Path": "/dev/null",
+    "Process": "atd",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 838,
+    "Path": "/dev/null",
+    "Process": "atd",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 838,
+    "Path": "/run/atd.pid",
+    "Process": "atd",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 848,
+    "Path": "/dev/tty1",
+    "Process": "login",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 848,
+    "Path": "/dev/tty1",
+    "Process": "login",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 848,
+    "Path": "/dev/tty1",
+    "Process": "login",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 848,
+    "Path": "socket:[40681]",
+    "Process": "login",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 848,
+    "Path": "/run/systemd/sessions/sessions/1.ref",
+    "Process": "login",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 885,
+    "Path": "/dev/null",
+    "Process": "unattended-upgr",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 885,
+    "Path": "socket:[38563]",
+    "Process": "unattended-upgr",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 885,
+    "Path": "socket:[38563]",
+    "Process": "unattended-upgr",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 885,
+    "Path": "/var/log/unattended-upgrades/unattended-upgrades-shutdown.log",
+    "Process": "unattended-upgr",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 885,
+    "Path": "socket:[38609]",
+    "Process": "unattended-upgr",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 885,
+    "Path": "anon_inode:[11519]",
+    "Process": "unattended-upgr",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 885,
+    "Path": "anon_inode:[11519]",
+    "Process": "unattended-upgr",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 885,
+    "Path": "socket:[39106]",
+    "Process": "unattended-upgr",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 885,
+    "Path": "/run/systemd/inhibit/inhibit/1.ref",
+    "Process": "unattended-upgr",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 885,
+    "Path": "socket:[39107]",
+    "Process": "unattended-upgr",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 910,
+    "Path": "/dev/null",
+    "Process": "polkitd",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 910,
+    "Path": "/dev/null",
+    "Process": "polkitd",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 910,
+    "Path": "/dev/null",
+    "Process": "polkitd",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 910,
+    "Path": "anon_inode:[11519]",
+    "Process": "polkitd",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 910,
+    "Path": "anon_inode:[11519]",
+    "Process": "polkitd",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 910,
+    "Path": "anon_inode:[11519]",
+    "Process": "polkitd",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 910,
+    "Path": "socket:[38829]",
+    "Process": "polkitd",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 910,
+    "Path": "anon_inode:[11519]",
+    "Process": "polkitd",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 910,
+    "Path": "anon_inode:[11519]",
+    "Process": "polkitd",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 910,
+    "Path": "anon_inode:[11519]",
+    "Process": "polkitd",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 920,
+    "Path": "/dev/null",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 920,
+    "Path": "socket:[39959]",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 920,
+    "Path": "socket:[39959]",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 920,
+    "Path": "socket:[39969]",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 920,
+    "Path": "socket:[39980]",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 1165,
+    "Path": "/dev/null",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 1165,
+    "Path": "socket:[41281]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 1165,
+    "Path": "socket:[41281]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 1165,
+    "Path": "socket:[42944]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 1165,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 1165,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 1165,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 1165,
+    "Path": "/sys/fs/cgroup/unified/user.slice/user-1000.slice/user@1000.service",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 1165,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 1165,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 10,
+    "PID": 1165,
+    "Path": "/proc/1165/mountinfo",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 11,
+    "PID": 1165,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 12,
+    "PID": 1165,
+    "Path": "socket:[43022]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 13,
+    "PID": 1165,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 14,
+    "PID": 1165,
+    "Path": "/proc/swaps",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 15,
+    "PID": 1165,
+    "Path": "socket:[42996]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 16,
+    "PID": 1165,
+    "Path": "socket:[42998]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 17,
+    "PID": 1165,
+    "Path": "socket:[42999]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 18,
+    "PID": 1165,
+    "Path": "socket:[43000]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 19,
+    "PID": 1165,
+    "Path": "socket:[43001]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 20,
+    "PID": 1165,
+    "Path": "socket:[43004]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 21,
+    "PID": 1165,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 26,
+    "PID": 1165,
+    "Path": "socket:[43028]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 27,
+    "PID": 1165,
+    "Path": "socket:[43030]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 28,
+    "PID": 1165,
+    "Path": "socket:[43032]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 29,
+    "PID": 1165,
+    "Path": "socket:[43034]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 30,
+    "PID": 1165,
+    "Path": "socket:[43036]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 31,
+    "PID": 1165,
+    "Path": "socket:[43041]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 32,
+    "PID": 1165,
+    "Path": "socket:[43044]",
+    "Process": "systemd",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 1166,
+    "Path": "/dev/null",
+    "Process": "(sd-pam)",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 1166,
+    "Path": "socket:[41281]",
+    "Process": "(sd-pam)",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 1166,
+    "Path": "socket:[41281]",
+    "Process": "(sd-pam)",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 1166,
+    "Path": "anon_inode:[11519]",
+    "Process": "(sd-pam)",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 1166,
+    "Path": "anon_inode:[11519]",
+    "Process": "(sd-pam)",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 1166,
+    "Path": "pipe:[41282]",
+    "Process": "(sd-pam)",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 1166,
+    "Path": "socket:[41290]",
+    "Process": "(sd-pam)",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 1171,
+    "Path": "/dev/tty1",
+    "Process": "bash",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 1171,
+    "Path": "/dev/tty1",
+    "Process": "bash",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 1171,
+    "Path": "/dev/tty1",
+    "Process": "bash",
+    "__children": []
+  },
+  {
+    "FD": 255,
+    "PID": 1171,
+    "Path": "/dev/tty1",
+    "Process": "bash",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 1195,
+    "Path": "/dev/null",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 1195,
+    "Path": "/dev/null",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 1195,
+    "Path": "/dev/null",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 1195,
+    "Path": "socket:[43275]",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 1195,
+    "Path": "socket:[43251]",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 1195,
+    "Path": "/dev/ptmx",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 1195,
+    "Path": "socket:[41452]",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 1195,
+    "Path": "socket:[44538]",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 1195,
+    "Path": "/run/systemd/sessions/sessions/3.ref",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 1279,
+    "Path": "/dev/null",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 1279,
+    "Path": "/dev/null",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 1279,
+    "Path": "/dev/null",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 1279,
+    "Path": "socket:[43275]",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 1279,
+    "Path": "socket:[43251]",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 1279,
+    "Path": "socket:[44537]",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 1279,
+    "Path": "socket:[41452]",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 1279,
+    "Path": "pipe:[41636]",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 1279,
+    "Path": "/run/systemd/sessions/sessions/3.ref",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 1279,
+    "Path": "pipe:[41636]",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 10,
+    "PID": 1279,
+    "Path": "/dev/ptmx",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 12,
+    "PID": 1279,
+    "Path": "/dev/ptmx",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 13,
+    "PID": 1279,
+    "Path": "/dev/ptmx",
+    "Process": "sshd",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 1280,
+    "Path": "/dev/pts/0",
+    "Process": "bash",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 1280,
+    "Path": "/dev/pts/0",
+    "Process": "bash",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 1280,
+    "Path": "/dev/pts/0",
+    "Process": "bash",
+    "__children": []
+  },
+  {
+    "FD": 255,
+    "PID": 1280,
+    "Path": "/dev/pts/0",
+    "Process": "bash",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 1678,
+    "Path": "/dev/null",
+    "Process": "packagekitd",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 1678,
+    "Path": "socket:[46544]",
+    "Process": "packagekitd",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 1678,
+    "Path": "socket:[46544]",
+    "Process": "packagekitd",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 1678,
+    "Path": "socket:[45895]",
+    "Process": "packagekitd",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 1678,
+    "Path": "anon_inode:[11519]",
+    "Process": "packagekitd",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 1678,
+    "Path": "socket:[45907]",
+    "Process": "packagekitd",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 1678,
+    "Path": "anon_inode:[11519]",
+    "Process": "packagekitd",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 1678,
+    "Path": "socket:[45908]",
+    "Process": "packagekitd",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 1678,
+    "Path": "anon_inode:[11519]",
+    "Process": "packagekitd",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 1678,
+    "Path": "anon_inode:[11519]",
+    "Process": "packagekitd",
+    "__children": []
+  },
+  {
+    "FD": 10,
+    "PID": 1678,
+    "Path": "/var/lib/PackageKit/transactions.db",
+    "Process": "packagekitd",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 4900,
+    "Path": "/dev/null",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 4900,
+    "Path": "socket:[143412]",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 4900,
+    "Path": "socket:[143412]",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 4900,
+    "Path": "/var/lib/containerd/io.containerd.metadata.v1.bolt/meta.db",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 4900,
+    "Path": "anon_inode:[11519]",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 4900,
+    "Path": "pipe:[142990]",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 4900,
+    "Path": "pipe:[142990]",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 4900,
+    "Path": "anon_inode:[11519]",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 4900,
+    "Path": "socket:[143419]",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 4900,
+    "Path": "socket:[143423]",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 10,
+    "PID": 4900,
+    "Path": "socket:[143731]",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 11,
+    "PID": 4900,
+    "Path": "socket:[144474]",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 12,
+    "PID": 4900,
+    "Path": "/run/containerd/io.containerd.runtime.v2.task/moby/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e/log",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 13,
+    "PID": 4900,
+    "Path": "/run/containerd/io.containerd.runtime.v2.task/moby/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e/log",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 14,
+    "PID": 4900,
+    "Path": "socket:[152953]",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 15,
+    "PID": 4900,
+    "Path": "socket:[153435]",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 16,
+    "PID": 4900,
+    "Path": "/run/containerd/io.containerd.runtime.v2.task/moby/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013/log",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 17,
+    "PID": 4900,
+    "Path": "/run/containerd/io.containerd.runtime.v2.task/moby/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013/log",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 18,
+    "PID": 4900,
+    "Path": "socket:[152521]",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 19,
+    "PID": 4900,
+    "Path": "socket:[153840]",
+    "Process": "containerd",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 5071,
+    "Path": "/dev/null",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 5071,
+    "Path": "socket:[143707]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 5071,
+    "Path": "socket:[143707]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 5071,
+    "Path": "socket:[144467]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 5071,
+    "Path": "socket:[144425]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 5071,
+    "Path": "anon_inode:[11519]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 5071,
+    "Path": "pipe:[144414]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 5071,
+    "Path": "pipe:[144414]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 5071,
+    "Path": "socket:[144427]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 5071,
+    "Path": "socket:[144395]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 10,
+    "PID": 5071,
+    "Path": "socket:[144472]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 11,
+    "PID": 5071,
+    "Path": "socket:[144473]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 12,
+    "PID": 5071,
+    "Path": "/var/lib/docker/volumes/metadata.db",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 13,
+    "PID": 5071,
+    "Path": "socket:[144588]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 14,
+    "PID": 5071,
+    "Path": "<unsupported d_op symbol: ns_dname>:[4026532000]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 15,
+    "PID": 5071,
+    "Path": "socket:[143786]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 16,
+    "PID": 5071,
+    "Path": "socket:[143787]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 17,
+    "PID": 5071,
+    "Path": "socket:[143788]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 18,
+    "PID": 5071,
+    "Path": "/var/lib/docker/buildkit/containerdmeta.db",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 19,
+    "PID": 5071,
+    "Path": "/var/lib/docker/buildkit/snapshots.db",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 20,
+    "PID": 5071,
+    "Path": "/var/lib/docker/buildkit/metadata_v2.db",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 21,
+    "PID": 5071,
+    "Path": "/var/lib/docker/buildkit/cache.db",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 24,
+    "PID": 5071,
+    "Path": "/run/docker/containerd/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e/init-stdout",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 25,
+    "PID": 5071,
+    "Path": "/run/docker/containerd/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e/init-stderr",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 26,
+    "PID": 5071,
+    "Path": "/run/docker/containerd/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e/init-stdout",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 27,
+    "PID": 5071,
+    "Path": "/run/docker/containerd/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013/init-stdout",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 28,
+    "PID": 5071,
+    "Path": "/var/lib/docker/containers/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e-json.log",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 29,
+    "PID": 5071,
+    "Path": "/run/docker/containerd/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e/init-stderr",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 30,
+    "PID": 5071,
+    "Path": "/run/docker/containerd/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013/init-stderr",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 31,
+    "PID": 5071,
+    "Path": "/run/docker/containerd/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013/init-stdout",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 32,
+    "PID": 5071,
+    "Path": "/var/lib/docker/containers/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013-json.log",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 33,
+    "PID": 5071,
+    "Path": "socket:[153401]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 34,
+    "PID": 5071,
+    "Path": "/run/docker/containerd/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013/init-stderr",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 38,
+    "PID": 5071,
+    "Path": "socket:[153794]",
+    "Process": "dockerd",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 5091,
+    "Path": "pipe:[144484]",
+    "Process": "none",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 5091,
+    "Path": "pipe:[144485]",
+    "Process": "none",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 5091,
+    "Path": "/dev/kmsg",
+    "Process": "none",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 6323,
+    "Path": "/dev/null",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 6323,
+    "Path": "/dev/null",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 6323,
+    "Path": "/dev/null",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 6323,
+    "Path": "anon_inode:[11519]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 6323,
+    "Path": "anon_inode:[11519]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 6323,
+    "Path": "pipe:[152952]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 6323,
+    "Path": "pipe:[152952]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 6323,
+    "Path": "anon_inode:[11519]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 6323,
+    "Path": "/run/containerd/io.containerd.runtime.v2.task/moby/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e/log",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 10,
+    "PID": 6323,
+    "Path": "/run/containerd/io.containerd.runtime.v2.task/moby/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e/log",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 11,
+    "PID": 6323,
+    "Path": "socket:[152259]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 12,
+    "PID": 6323,
+    "Path": "socket:[152954]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 13,
+    "PID": 6323,
+    "Path": "pipe:[152956]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 14,
+    "PID": 6323,
+    "Path": "/run/docker/containerd/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e/init-stdout",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 15,
+    "PID": 6323,
+    "Path": "pipe:[152957]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 16,
+    "PID": 6323,
+    "Path": "/run/docker/containerd/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e/init-stdout",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 17,
+    "PID": 6323,
+    "Path": "/run/docker/containerd/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e/init-stdout",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 18,
+    "PID": 6323,
+    "Path": "/run/docker/containerd/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e/init-stdout",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 19,
+    "PID": 6323,
+    "Path": "/run/docker/containerd/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e/init-stderr",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 20,
+    "PID": 6323,
+    "Path": "/run/docker/containerd/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e/init-stderr",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 21,
+    "PID": 6323,
+    "Path": "/run/docker/containerd/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e/init-stderr",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 22,
+    "PID": 6323,
+    "Path": "/run/docker/containerd/ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e/init-stderr",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 23,
+    "PID": 6323,
+    "Path": "socket:[152392]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 24,
+    "PID": 6323,
+    "Path": "anon_inode:[11519]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 6343,
+    "Path": "/dev/null",
+    "Process": "sleep",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 6343,
+    "Path": "pipe:[152956]",
+    "Process": "sleep",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 6343,
+    "Path": "pipe:[152957]",
+    "Process": "sleep",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 6398,
+    "Path": "/dev/null",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 6398,
+    "Path": "/dev/null",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 6398,
+    "Path": "/dev/null",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 6398,
+    "Path": "anon_inode:[11519]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 6398,
+    "Path": "anon_inode:[11519]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 6398,
+    "Path": "pipe:[153717]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 6398,
+    "Path": "pipe:[153717]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 6398,
+    "Path": "anon_inode:[11519]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 6398,
+    "Path": "/run/containerd/io.containerd.runtime.v2.task/moby/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013/log",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 10,
+    "PID": 6398,
+    "Path": "/run/containerd/io.containerd.runtime.v2.task/moby/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013/log",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 11,
+    "PID": 6398,
+    "Path": "socket:[153706]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 12,
+    "PID": 6398,
+    "Path": "socket:[153720]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 13,
+    "PID": 6398,
+    "Path": "pipe:[153731]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 14,
+    "PID": 6398,
+    "Path": "/run/docker/containerd/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013/init-stdout",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 15,
+    "PID": 6398,
+    "Path": "pipe:[153732]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 16,
+    "PID": 6398,
+    "Path": "/run/docker/containerd/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013/init-stdout",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 17,
+    "PID": 6398,
+    "Path": "/run/docker/containerd/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013/init-stdout",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 18,
+    "PID": 6398,
+    "Path": "/run/docker/containerd/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013/init-stdout",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 19,
+    "PID": 6398,
+    "Path": "/run/docker/containerd/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013/init-stderr",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 20,
+    "PID": 6398,
+    "Path": "/run/docker/containerd/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013/init-stderr",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 21,
+    "PID": 6398,
+    "Path": "/run/docker/containerd/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013/init-stderr",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 22,
+    "PID": 6398,
+    "Path": "/run/docker/containerd/db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013/init-stderr",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 23,
+    "PID": 6398,
+    "Path": "socket:[155041]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 24,
+    "PID": 6398,
+    "Path": "anon_inode:[11519]",
+    "Process": "containerd-shim",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 6417,
+    "Path": "/dev/null",
+    "Process": "sleep",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 6417,
+    "Path": "pipe:[153731]",
+    "Process": "sleep",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 6417,
+    "Path": "pipe:[153732]",
+    "Process": "sleep",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 6934,
+    "Path": "/dev/pts/0",
+    "Process": "sudo",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 6934,
+    "Path": "/dev/pts/0",
+    "Process": "sudo",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 6934,
+    "Path": "/dev/pts/0",
+    "Process": "sudo",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 6934,
+    "Path": "socket:[165275]",
+    "Process": "sudo",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 6934,
+    "Path": "socket:[165279]",
+    "Process": "sudo",
+    "__children": []
+  },
+  {
+    "FD": 6,
+    "PID": 6934,
+    "Path": "pipe:[165282]",
+    "Process": "sudo",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 6934,
+    "Path": "pipe:[165282]",
+    "Process": "sudo",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 6935,
+    "Path": "/dev/pts/0",
+    "Process": "insmod",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 6935,
+    "Path": "/dev/pts/0",
+    "Process": "insmod",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 6935,
+    "Path": "/dev/pts/0",
+    "Process": "insmod",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 6935,
+    "Path": "/home/vol/lime-5.4.0-88-generic.ko",
+    "Process": "insmod",
+    "__children": []
+  },
+  {
+    "FD": 0,
+    "PID": 6936,
+    "Path": "/dev/null",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 1,
+    "PID": 6936,
+    "Path": "socket:[30724]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 2,
+    "PID": 6936,
+    "Path": "socket:[30724]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 3,
+    "PID": 6936,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 4,
+    "PID": 6936,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 5,
+    "PID": 6936,
+    "Path": "socket:[30733]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 7,
+    "PID": 6936,
+    "Path": "socket:[30736]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 8,
+    "PID": 6936,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 9,
+    "PID": 6936,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 10,
+    "PID": 6936,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 11,
+    "PID": 6936,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 12,
+    "PID": 6936,
+    "Path": "/usr/lib/udev/hwdb.bin",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 13,
+    "PID": 6936,
+    "Path": "anon_inode:[11519]",
+    "Process": "systemd-udevd",
+    "__children": []
+  },
+  {
+    "FD": 14,
+    "PID": 6936,
+    "Path": "socket:[165286]",
+    "Process": "systemd-udevd",
+    "__children": []
+  }
+]
