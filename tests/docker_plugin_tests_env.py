@@ -45,10 +45,23 @@ CAPABILITIES = [
     "CAP_CHECKPOINT_RESTORE"
 ]
 
+import json
+
+with open("tests/output_from_vol/pslist_cred.json") as f:
+    f = f.read()
+    pslist = json.loads(f)
+
+with open("tests/output_from_vol/mount_pid_6343.json") as f:
+    f = f.read()
+    container_mounts = json.loads(f)
+
+############################################################
+
 CONTAINERD_PROCESS_COMMAND  = "containerd-shim"
 DOCKER_OVERLAY_DIR_PATH     = "/var/lib/docker/overlay"
 MERGED_DIR                  = "merged"
 MERGED_DIR_PATH_LEN         = 7
+PRIV_CONTAINER_EFF_CAPS     = 274877906943
 
 class Ps():
     def __init__(self, tasks_list) -> None:
@@ -97,6 +110,24 @@ class Ps():
                 container_id = splitted_path[-2] # Extract container_id from path
                 return container_id
     
+    def generate_list(self):
+        """ 
+        This function generates a list of running containers in this format:
+        container_id, command, created, is_privileged, pid
+        """
+
+        containers_pids = self.get_containers_pids()
+        
+        # Search for container's tasks
+        for task in self.tasks_list:
+            for pid in containers_pids:
+                if task["PID"] == pid:
+                    creation_time = ""
+                    command = task["COMM"]
+                    container_id = self.get_container_id(container_mounts)
+                    is_priv = task["CapEff"] == PRIV_CONTAINER_EFF_CAPS
+                    yield creation_time, command, container_id, is_priv, pid
+    
 class InspectCaps():
     """ This class has methods for capabilites extraction and convertion """
 
@@ -129,7 +160,7 @@ class InspectCaps():
                 active_caps.append(CAPABILITIES[i])
         return active_caps
     
-    def return_containers_caps(self):
+    def generate_containers_caps_list(self):
         """ This function iterate each container pid and convert its effective capabilities to list of caps """
 
         # Iterate each pid in containers list and search for it's task
@@ -140,19 +171,12 @@ class InspectCaps():
                     effective_caps_list = self._caps_hex_to_string(effective_caps)
                     yield pid, effective_caps, effective_caps_list
 
-import json
 
-with open("tests/output_from_vol/pslist_cred.json") as f:
-    f = f.read()
-    pslist = json.loads(f)
-
-with open("tests/output_from_vol/mount_pid_6343.json") as f:
-    f = f.read()
-    container_mounts = json.loads(f)
 
 docker_ps = Ps(pslist)
 containers_pids = docker_ps.get_containers_pids()
 
 print(docker_ps.get_container_id(container_mounts))
+docker_ps.generate_list()
 
-InspectCaps(pslist, containers_pids).return_containers_caps()
+InspectCaps(pslist, containers_pids).generate_containers_caps_list()

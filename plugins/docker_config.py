@@ -1,6 +1,0 @@
-DOCKER_MAC_VENDOR_STARTER       = "02:42"
-DOCKER_INTERFACE_STARTER        = "docker"
-VETH_NAME_STARTER               = "eth"
-DOCKER_MOUNT_PATH               = "/var/lib/docker/"
-CONTAINERD_SHIM_PROC_STARTER    = "containerd-shim"
-OVERLAY                         = "overlay"
