@@ -1,5 +1,6 @@
 from typing import List
 import logging
+from datetime import datetime
 
 from volatility3.framework import renderers, interfaces
 from volatility3.framework.configuration import requirements
@@ -216,12 +217,13 @@ class Ps():
         for task in self.tasks_list:
             for pid in containers_pids:
                 if task.pid == pid:
-                    creation_time = "FILL" # TODO: Get process creation time from pslist
                     command = utility.array_to_string(task.comm)
                     container_id = self.get_container_id(task.pid)
 
                     # Extract creds from task and check if container runs as priv. Note that there is a class that checks the exact container's creds
-                    task_info = pslist.PsList.get_task_info(task, credinfo=True)
+                    task_info = pslist.PsList.get_task_info(self.context, self.vmlinux.name, task, credinfo=True)
+                    creation_time = task_info.start_time
+                    creation_time = datetime.utcfromtimestamp(creation_time).isoformat(sep=' ', timespec='milliseconds')
                     is_priv = task_info.cap_eff == PRIV_CONTAINER_EFF_CAPS
                     yield creation_time, command, container_id, is_priv, pid
     
@@ -275,6 +277,12 @@ class InspectCaps():
                     effective_caps = task_info.cap_eff
                     effective_caps_list = self._caps_hex_to_string(effective_caps)
                     yield pid, container_id, hex(effective_caps), ','.join(effective_caps_list)
+
+class NetworkLs():
+    def __init__(self, context, vmlinux) -> None:
+        self.context = context # Volatility req
+        self.vmlinux = vmlinux # Volatility req
+        self.net_devices = ifconfig.Ifconfig.get_devices_namespaces(self.context, self.vmlinux.name)
 
 class Docker(interfaces.plugins.PluginInterface) :
     """ Main class for docker plugin """
@@ -346,7 +354,7 @@ class Docker(interfaces.plugins.PluginInterface) :
                             ('Mounted overlay FS', bool), ('Containerd-shim is running', bool)])
 
         if self.config.get("ps"):
-            columns.extend([('Creation time', str), ('Command', str), ('Container ID', str),
+            columns.extend([('Creation time (UTC)', str), ('Command', str), ('Container ID', str),
                             ('Is privileged', bool), ('PID', int)])
         
         if self.config.get("inspect-caps"):
