@@ -276,3 +276,89 @@ class LinuxUtilities(interfaces.configuration.VersionableInterface):
             list_struct = vmlinux.object(object_type = struct_name, offset = list_start.vol.offset)
             yield list_struct
             list_start = getattr(list_struct, list_member)
+
+    @classmethod
+    def _get_time_vars(cls, vmlinux):
+        """Finds global time variables that may be used for time calculations.
+        Sometime in 3.[3-5], Linux switched to a global timekeeper structure
+        This just figures out which is in use and returns the correct variables
+        """
+        has_wall = vmlinux.has_symbol('wall_to_monotonic')
+        has_sleep = vmlinux.has_symbol('total_sleep_time')
+        has_timekeeper = vmlinux.has_symbol('timekeeper')
+        has_tk_core = vmlinux.has_symbol('tk_core')
+
+        wall = None
+        timeo = None
+
+        # old way
+        if has_wall:
+            wall = vmlinux.object_from_symbol('wall_to_monotonic')
+            if has_sleep:
+                timeo = vmlinux.object_from_symbol('total_sleep_time')
+            else:
+                timeo = extensions.VolTimespec(0, 0)
+        
+        # timekeeper way
+        elif has_timekeeper:
+            timekeeper = vmlinux.object_from_symbol('timekeeper')
+            wall = timekeeper.wall_to_monotonic
+            timeo = timekeeper.total_sleep_time
+        
+        elif has_tk_core:
+            tk_core = vmlinux.object_from_symbol('tk_core')
+            timekeeper = tk_core.timekeeper
+            wall = timekeeper.wall_to_monotonic
+
+            # 3.17(ish) - 3.19(ish) way
+            if timekeeper.has_member('total_sleep_time'):
+                timeo = timekeeper.total_sleep_time
+            
+            # 3.19(ish)+
+            # getboottime from 3.19.x
+            else:
+                oreal = timekeeper.offs_real
+                oboot = timekeeper.offs_boot
+
+                if oreal.has_member('tv64'):
+                    tv64 = (oreal.tv64 & 0xffffffff) - (oboot.tv64 & 0xffffffff)
+                else:
+                    tv64 = (oreal & 0xffffffff) - (oboot & 0xffffffff)
+                
+                if tv64:
+                    tv64 = (tv64 / 100000000) * -1
+                    timeo = extensions.VolTimespec(tv64, 0) 
+                else:
+                    timeo = None
+        
+        return (wall, timeo)
+
+    @classmethod
+    def get_boot_time(cls, vmlinux):
+        """Get the boot time as a Unix timestamp.
+        Based on 2.6.35 getboottime.
+        """
+        nsecs_per_sec = 1000000000
+
+        (wall, timeo) = cls._get_time_vars(vmlinux)
+
+        if wall is None or timeo is None:
+            return -1
+
+        secs = wall.tv_sec + timeo.tv_sec
+        nsecs = wall.tv_nsec + timeo.tv_nsec
+
+        secs = secs * -1
+        nsecs = nsecs * -1
+
+        while nsecs >= nsecs_per_sec:
+            nsecs = nsecs - nsecs_per_sec
+            secs = secs + 1
+
+        while nsecs < 0:
+            nsecs = nsecs + nsecs_per_sec
+            secs = secs - 1
+
+        boot_time = secs + (nsecs / nsecs_per_sec / 100)
+
+        return boot_time

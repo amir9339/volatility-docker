@@ -4,6 +4,7 @@
 from typing import Callable, Iterable, List, Any, Tuple
 from dataclasses import dataclass
 import logging
+from datetime import datetime
 
 from volatility3.framework import renderers, interfaces, symbols
 from volatility3.framework.configuration import requirements
@@ -21,6 +22,7 @@ class TaskInfo:
     pid: int = -1
     ppid: int = -1
     name: str = ''
+    start_time: float = 0
 
     # namespace info
     pid_in_ns: int = -1
@@ -42,7 +44,8 @@ class TaskInfo:
     cap_bnd: int = -1
 
     def tuple(self, nsinfo: bool = False, credinfo: bool = False):
-        lst = [self.pid, self.ppid, self.name]
+        time_str = datetime.utcfromtimestamp(self.start_time).isoformat(sep=' ', timespec='milliseconds')
+        lst = [self.pid, self.ppid, self.name, time_str]
         if nsinfo:
             lst.extend([self.pid_in_ns, self.uts_ns, self.ipc_ns, self.mnt_ns, self.net_ns, self.pid_ns, self.user_ns])
         if credinfo:
@@ -102,10 +105,15 @@ class PsList(interfaces.plugins.PluginInterface):
 
     @classmethod
     def get_task_info(cls,
+                      context: interfaces.context.ContextInterface,
+                      vmlinux_module_name: str,
                       task: symbols.linux.extensions.task_struct,
+                      boot_time: int = None,
                       nsinfo: bool = False,
                       credinfo: bool = False) -> TaskInfo:
         """Extract information about a task."""
+        vmlinux = context.modules[vmlinux_module_name]
+
         info = TaskInfo()
 
         # extract general info
@@ -114,6 +122,9 @@ class PsList(interfaces.plugins.PluginInterface):
         if task.parent:
             info.ppid = task.parent.pid
         info.name = utility.array_to_string(task.comm)
+        if boot_time is None:
+            boot_time = symbols.linux.LinuxUtilities.get_boot_time(vmlinux)
+        info.start_time = task.get_start_time(boot_time)
         
         # extract namespace information
         if nsinfo:
@@ -185,13 +196,16 @@ class PsList(interfaces.plugins.PluginInterface):
         return info
 
     def _generator(self):
+        vmlinux = self.context.modules[self.config['kernel']]
         nsinfo = self.config.get('nsinfo', False)
         credinfo = self.config.get('credinfo', False)
+
+        boot_time = symbols.linux.LinuxUtilities.get_boot_time(vmlinux)
 
         for task in self.list_tasks(self.context,
                                     self.config['kernel'],
                                     filter_func = self.create_pid_filter(self.config.get('pid', None))):
-            taskinfo = self.get_task_info(task, nsinfo=nsinfo, credinfo=credinfo)
+            taskinfo = self.get_task_info(self.context, self.config['kernel'], task, boot_time=boot_time, nsinfo=nsinfo, credinfo=credinfo)
             yield (0, taskinfo.tuple(nsinfo=nsinfo, credinfo=credinfo))
 
     @classmethod
@@ -219,7 +233,7 @@ class PsList(interfaces.plugins.PluginInterface):
                 yield task
 
     def run(self):
-        columns = [('PID', int), ('PPID', int), ('COMM', str)]
+        columns = [('PID', int), ('PPID', int), ('COMM', str), ('Start Time (UTC)', str)]
 
         if self.config.get('nsinfo', False):
             columns.extend([('PID in NS', int), ('UTS NS', int), ('IPC NS', int),

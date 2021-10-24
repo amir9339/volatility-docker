@@ -18,6 +18,11 @@ vollog = logging.getLogger(__name__)
 
 # Keep these in a basic module, to prevent import cycles when symbol providers require them
 
+class VolTimespec:
+    def __init__(self, secs: int, nsecs: int):
+        self.tv_sec = secs
+        self.tv_nsec = nsecs
+
 
 class module(generic.GenericIntelProcess):
 
@@ -232,6 +237,22 @@ class task_struct(generic.GenericIntelProcess):
             return self.namespace.dereference()
         else:
             raise AttributeError('Unable to find task -> mnt_namespace')
+    
+    def get_start_time(self, boot_time: int) -> int:
+        """Returns the start time of the task as a Unix timestamp."""
+        if self.has_member('real_start_time'):
+            start_time = self.real_start_time
+        else:
+            start_time = self.start_time
+
+        nsecs_per_sec = 1000000000
+        start_time = VolTimespec(start_time / nsecs_per_sec, 0)
+        start_secs = start_time.tv_sec + (start_time.tv_nsec / nsecs_per_sec / 100)
+
+        if boot_time != -1:
+            return boot_time + start_secs
+
+        return 0
 
 
 class fs_struct(objects.StructType):
@@ -712,6 +733,10 @@ class user_namespace(GenericNamespace):
 class kernel_cap_struct(objects.StructType):
     def to_int(self):
         val = 0
-        for i, u32 in enumerate(self.cap):
-            val += u32 << (i*32)
+        try:
+            for i, u32 in enumerate(self.cap):
+                val += u32 << (i*32)
+        # in older kernels cap is an integer and not an array of integers
+        except TypeError:
+            val = self.cap
         return val
