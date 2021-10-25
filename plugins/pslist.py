@@ -10,6 +10,7 @@ from volatility3.framework import renderers, interfaces, symbols
 from volatility3.framework.configuration import requirements
 from volatility3.framework.objects import utility
 from volatility3.framework.renderers import format_hints
+from volatility3.framework import exceptions
 
 
 vollog = logging.getLogger(__name__)
@@ -138,43 +139,43 @@ class PsList(interfaces.plugins.PluginInterface):
                 # get uts namespace
                 try:
                     info.uts_ns = nsproxy.get_uts_ns().get_inum()
-                except AttributeError:
+                except (AttributeError, exceptions.PagedInvalidAddressException):
                     info.uts_ns = -1
                 
                 # get ipc namespace
                 try:
                     info.ipc_ns = nsproxy.get_ipc_ns().get_inum()
-                except AttributeError:
+                except (AttributeError, exceptions.PagedInvalidAddressException):
                     info.ipc_ns = -1
 
                 # get mount namespace
                 try:
                     info.mnt_ns = nsproxy.get_mnt_ns().get_inum()
-                except AttributeError:
+                except (AttributeError, exceptions.PagedInvalidAddressException):
                     info.mnt_ns = -1
                 
                 # get net namespace
                 try:
                     info.net_ns = nsproxy.get_net_ns().get_inum()
-                except AttributeError:
+                except (AttributeError, exceptions.PagedInvalidAddressException):
                     info.net_ns = -1
                 
                 # get pid namespace
                 try:
                     info.pid_ns = task.get_pid_ns().get_inum()
-                except AttributeError:
+                except (AttributeError, exceptions.PagedInvalidAddressException):
                     info.pid_ns = -1
                 
                 # get user namespace
                 try:
                     info.user_ns = nsproxy.get_user_ns().get_inum()
-                except AttributeError:
+                except (AttributeError, exceptions.PagedInvalidAddressException):
                     info.user_ns = -1
                 
                 # get pid from within the namespace
                 try:
                     info.pid_in_ns = task.get_namespace_pid()
-                except AttributeError:
+                except (AttributeError, exceptions.PagedInvalidAddressException):
                     info.pid_in_ns = -1
             
             # no task -> nsproxy
@@ -184,14 +185,38 @@ class PsList(interfaces.plugins.PluginInterface):
         # extract credentials and capability information
         if credinfo:
             cred = task.cred.dereference()
-            info.real_uid = cred.uid.val
-            info.real_gid = cred.gid.val
-            info.eff_uid = cred.euid.val
-            info.eff_gid = cred.egid.val
-            info.cap_inh = cred.cap_inheritable.to_int()
-            info.cap_prm = cred.cap_permitted.to_int()
-            info.cap_eff = cred.cap_effective.to_int()
-            info.cap_bnd = cred.cap_bset.to_int()
+            try:
+                info.real_uid = cred.uid.val
+            except exceptions.PagedInvalidAddressException:
+                pass
+            try:
+                info.real_gid = cred.gid.val
+            except exceptions.PagedInvalidAddressException:
+                pass
+            try:
+                info.eff_uid = cred.euid.val
+            except exceptions.PagedInvalidAddressException:
+                pass
+            try:
+                info.eff_gid = cred.egid.val
+            except exceptions.PagedInvalidAddressException:
+                pass
+            try:
+                info.cap_inh = cred.cap_inheritable.to_int()
+            except exceptions.PagedInvalidAddressException:
+                pass
+            try:
+                info.cap_prm = cred.cap_permitted.to_int()
+            except exceptions.PagedInvalidAddressException:
+                pass
+            try:
+                info.cap_eff = cred.cap_effective.to_int()
+            except exceptions.PagedInvalidAddressException:
+                pass
+            try:
+                info.cap_bnd = cred.cap_bset.to_int()
+            except exceptions.PagedInvalidAddressException:
+                pass
 
         return info
 
