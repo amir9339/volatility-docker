@@ -4,7 +4,7 @@ from datetime import datetime
 
 from volatility3.framework import renderers, interfaces
 from volatility3.framework.configuration import requirements
-from volatility3.framework.interfaces import context
+from volatility3.framework import exceptions
 from volatility3.framework.objects import utility
 
 from volatility3.plugins.linux import pslist, mount, ifconfig
@@ -22,6 +22,12 @@ DOCKER_OVERLAY_DIR_PATH         = "/var/lib/docker/overlay"
 MERGED_DIR                      = "merged"
 MERGED_DIR_PATH_LEN             = 7
 PRIV_CONTAINER_EFF_CAPS         = 274877906943 # 0x3fffffffff
+
+MOUNTS_WHITELIST = (
+    "-",
+    "/var/lib/docker/overlay",
+    "/sys/fs/cgroup",
+)
 
 CAPABILITIES = [
     # Defined at: https://elixir.bootlin.com/linux/v5.15-rc6/source/include/uapi/linux/capability.h
@@ -141,13 +147,13 @@ class Detector():
     
         # Look for docker related interfaces
         for net_dev in self.net_devices:
-            name, ip_addr, mac_addr, promisc = ifconfig.Ifconfig._gather_net_dev_info(net_dev)
+            name, ip_addr, mac_addr, promisc = ifconfig.Ifconfig._gather_net_dev_info(self.context, self.vmlinux.name, net_dev)
 
             if self._detect_docker_network_interface(name, mac_addr):
                 docker_eth_exists = True
             
-            if self._detect_docker_network_interface(name, mac_addr):
-                container_shim_running = True
+            if self._detect_docker_veths(name, mac_addr):
+                docker_veth_exists = True
 
         yield docker_eth_exists, docker_veth_exists, overlay_fs_exists, container_shim_running
 
@@ -166,8 +172,8 @@ class Ps():
             and returns their PIDs
         """
 
-        containerd_shim_processes_pids = list()
-        containers_pids = list()
+        containerd_shim_processes_pids = []
+        containers_pids = []
         
         # Iterate processes list and search for "containerd-shim" processes which are bound to containers
         for task in self.tasks_list:
@@ -224,8 +230,10 @@ class Ps():
                     task_info = pslist.PsList.get_task_info(self.context, self.vmlinux.name, task, credinfo=True)
                     creation_time = task_info.start_time
                     creation_time = datetime.utcfromtimestamp(creation_time).isoformat(sep=' ', timespec='milliseconds')
+                    effective_uid = task_info.eff_uid
                     is_priv = task_info.cap_eff == PRIV_CONTAINER_EFF_CAPS
-                    yield creation_time, command, container_id, is_priv, pid
+
+                    yield creation_time, command, container_id, is_priv, pid, effective_uid
     
 class InspectCaps():
     """ This class has methods for capabilites extraction and convertion """
@@ -247,7 +255,7 @@ class InspectCaps():
         This function iterate each flag in seq and if it's active it adds the specific capability to the list as a string represents it's name.
         """
         
-        active_caps = list()
+        active_caps = []
         caps = abs(caps) # The method below doesn't work for negative numbers
         
         bits_seq = bin(caps)[2:]
@@ -273,10 +281,46 @@ class InspectCaps():
                     container_id = Ps(self.context, self.vmlinux, self.tasks_list).get_container_id(pid)
                     
                     # Get task's creds
-                    task_info = pslist.PsList.get_task_info(task, credinfo=True)
+                    task_info = pslist.PsList.get_task_info(self.context, self.vmlinux.name, task, credinfo=True)
                     effective_caps = task_info.cap_eff
                     effective_caps_list = self._caps_hex_to_string(effective_caps)
                     yield pid, container_id, hex(effective_caps), ','.join(effective_caps_list)
+
+class InspectMounts():
+    """ This class has methods for interesting mounts extraction """
+
+    def __init__(self, context, vmlinux, tasks_list, containers_pids) -> None:
+        """
+        tasks_list - A list of tasks, extracted from memory using Pslist plugin
+        containers_pids - A list of containers pids to inspect 
+        """
+
+        self.context = context # Volatility req
+        self.vmlinux = vmlinux # Volatility req
+        self.tasks_list = tasks_list
+        self.containers_pids = containers_pids
+
+    def generate_mounts_list(self):
+        """
+        This function generates a list of containers unusual mount points.
+        For each container that Ps class found it checks for mounts in it mount namespace 
+            and compare it with it a whitelist that contains normal mounts paths.
+        It returns: container pid, container_id and details about the mount taken from linux.mount.
+        """
+
+        # For each container, check for unusual mounts        
+        for pid in self.containers_pids:
+            pid_filter = pslist.PsList.create_pid_filter([pid]) 
+            process_mounts = mount.Mount.get_mounts(self.context, self.vmlinux.name, pid_filter) # Extract mounts for this process
+            process_mounts = [mount.Mount.get_mount_info(mnt) for mnt in process_mounts] # Extract mount info for each mount point
+
+            # Iterate each mount in mounts list
+            for mnt_id, parent_id, devname, path, absolute_path, fs_type, access, flags in process_mounts:
+                if not absolute_path.startswith(MOUNTS_WHITELIST):
+                    
+                    # Get container-id from Ps class
+                    container_id = Ps(self.context, self.vmlinux, self.tasks_list).get_container_id(pid)
+                    yield pid, container_id, mnt_id, parent_id, devname, path, absolute_path, fs_type, access, flags
 
 class NetworkLs():
     def __init__(self, context, vmlinux) -> None:
@@ -318,6 +362,10 @@ class Docker(interfaces.plugins.PluginInterface) :
                                             description='Inspect container\'s capabilities ',
                                             optional=True,
                                             default=False),
+                requirements.BooleanRequirement(name='inspect-mounts',
+                                            description='Inspect container\'s mounts',
+                                            optional=True,
+                                            default=False),
                 ]
 
     def _generator(self):
@@ -339,15 +387,26 @@ class Docker(interfaces.plugins.PluginInterface) :
             for container_row in Ps(self.context, vmlinux ,tasks_list).generate_list():
                 yield (0, container_row)
 
-        # If user chose ps, generate containers list and check their capabilities
+        # If user chose inspect-caps, generate containers list and check their capabilities
         if self.config.get("inspect-caps"):
             containers_pids = Ps(self.context, vmlinux ,tasks_list).get_containers_pids()
             for container_row in InspectCaps(self.context, vmlinux, tasks_list, containers_pids).generate_containers_caps_list():
+                yield (0, container_row)
+        
+        # If user chose inspect-mounts, generate containers list and check their mounts
+        if self.config.get("inspect-mounts"):
+            containers_pids = Ps(self.context, vmlinux ,tasks_list).get_containers_pids()
+            for container_row in InspectMounts(self.context, vmlinux, tasks_list, containers_pids).generate_mounts_list():
                 yield (0, container_row)
 
     def run(self):
 
         columns = []
+
+        if not self.config.get("detector") and not self.config.get("ps") \
+            and not self.config.get("inspect-caps") and not self.config.get("inspect-mounts"):
+            vollog.error(f'No option selected')
+            raise exceptions.PluginRequirementException('No option selected')
 
         if self.config.get("detector"):
             columns.extend([('Docker inetrface', bool), ('Docker veth', bool), 
@@ -355,9 +414,15 @@ class Docker(interfaces.plugins.PluginInterface) :
 
         if self.config.get("ps"):
             columns.extend([('Creation time (UTC)', str), ('Command', str), ('Container ID', str),
-                            ('Is privileged', bool), ('PID', int)])
+                            ('Is privileged', bool), ('PID', int), ('Effective UID', int)])
         
         if self.config.get("inspect-caps"):
             columns.extend([('PID', int), ('Container ID', str), ('Effective capabilities value', str), ('Effective capabilities names', str)])
+        
+        if self.config.get("inspect-mounts"):
+            columns.extend([('PID', int), ('Container ID', str), ('Mount ID', int), 
+                            ('Parent ID', int) ,('Device name', str), ('Path', str), 
+                            ('Absolute Path', str), ('FS type', str), ('Access', str),
+                            ('Flags', str)])
 
         return renderers.TreeGrid(columns, self._generator())
