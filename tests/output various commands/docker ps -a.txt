@@ -1,0 +1,20 @@
+vol@volatility-docker:~$ sudo docker ps -a
+CONTAINER ID   IMAGE          COMMAND        CREATED              STATUS                        PORTS     NAMES
+95b311321c2b   ubuntu:20.04   "sleep 6000"   13 seconds ago       Up 11 seconds                           awesome_kalam
+6cdacfa4fd5f   ubuntu:20.04   "sleep 5000"   27 seconds ago       Up 26 seconds                           zealous_johnson
+577cefa561b7   ubuntu:20.04   "sleep 4000"   58 seconds ago       Up 57 seconds                           elegant_vaughan
+4521958150a7   ubuntu:20.04   "sleep 3000"   About a minute ago   Up About a minute                       sweet_burnell
+9a70c7597cb5   ubuntu:20.04   "sleep 2000"   About a minute ago   Up About a minute                       youthful_booth
+32cdcaad8f14   ubuntu:20.04   "sleep 1000"   2 minutes ago        Up 2 minutes                            wizardly_sammet
+eadc69bf2816   ubuntu:20.04   "sleep 1000"   24 minutes ago       Exited (137) 20 minutes ago             serene_hellman
+df55db4b9e8d   ubuntu:20.04   "bash"         23 hours ago         Exited (0) 23 hours ago                 test4
+dc87eb8401da   ubuntu:20.04   "bash"         8 days ago           Exited (129) 8 days ago                 test3
+6c5a50046d47   ubuntu:20.04   "bash"         9 days ago           Exited (0) 9 days ago                   test2
+e34e043864f4   ubuntu:20.04   "bash"         10 days ago          Exited (255) 9 days ago                 test
+465c0b42b7a2   ubuntu:20.04   "bash"         10 days ago          Exited (255) 9 days ago                 recursing_germain
+efbade95ecb3   ubuntu:20.04   "-it bash"     10 days ago          Created                                 silly_matsumoto
+490f8d00a002   ubuntu:20.04   "-a bash"      10 days ago          Created                                 intelligent_hopper
+e2a113601ee7   ubuntu:20.04   "/bin/sh"      10 days ago          Exited (0) 10 days ago                  ecstatic_stonebraker
+074593d21eea   ubuntu:20.04   "bash"         10 days ago          Exited (0) 10 days ago                  ecstatic_dewdney
+db5eb3d076e9   ubuntu:20.04   "sleep 3000"   2 weeks ago          Exited (0) 2 weeks ago                  focused_haslett
+ac221650209e   ubuntu:20.04   "sleep 4200"   2 weeks ago          Exited (0) 2 weeks ago                  pensive_kirch
