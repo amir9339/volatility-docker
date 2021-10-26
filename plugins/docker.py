@@ -89,7 +89,6 @@ class Detector():
         This function search for an docker standard interface. 
         Looking for an interface whose name starts with 'docker' and its MAC vendor starts with '02:42' (the last 4 bytes are calculated on the fly)
         """
-
         return name.startswith(DOCKER_INTERFACE_STARTER) and mac_addr.startswith(DOCKER_MAC_VENDOR_STARTER)
 
     def _detect_docker_veths(self, name, mac_addr) -> bool:
@@ -98,7 +97,6 @@ class Detector():
         Almost the same way as in _detect_docker_network_interface function.
         It looking for interfaces starting with the name 'eth' and the MAC address '02:42'
         """
-
         return name.startswith(VETH_NAME_STARTER) and mac_addr.startswith(DOCKER_MAC_VENDOR_STARTER)
 
     def _detect_overlay_fs(self, fstype, path) -> bool:
@@ -107,7 +105,6 @@ class Detector():
             /var/lib/docker/
         These FS are used as container's FS
         """
-
         return OVERLAY in fstype and path.startswith(DOCKER_MOUNT_PATH)
     
     def _detect_containerd_shim(self, proc_name) -> bool:
@@ -117,14 +114,12 @@ class Detector():
             root        6417   2508    68 16:00  \_ sleep 3000
         This function is looking for a process of containerd-shim in processes list
         """
-
         return CONTAINERD_SHIM_PROC_STARTER in proc_name
 
     def generate_detection_list(self):
         """ 
         This function generates a list of values that indicates a presence of containers / docker daemon on machine 
         """
-
         # Set default values
         docker_eth_exists, docker_veth_exists, overlay_fs_exists, container_shim_running = False, False, False, False
 
@@ -171,7 +166,6 @@ class Ps():
             processes that are bound to those shim processes 
             and returns their PIDs
         """
-
         containerd_shim_processes_pids = []
         containers_pids = []
         
@@ -196,7 +190,6 @@ class Ps():
         Then, it iterates container's process mounts and search for 
             container_id which is the name of container's dir
         """
-
         pid_filter = pslist.PsList.create_pid_filter([container_pid]) 
         process_mounts = mount.Mount.get_mounts(self.context, self.vmlinux.name, pid_filter) # Extract mounts for this process
         process_mounts = [mount.Mount.get_mount_info(mnt) for mnt in process_mounts] # Extract mount info for each mount point
@@ -216,7 +209,6 @@ class Ps():
         This function generates a list of running containers in this format:
         creation_time, command, container_id, is_priv, pid
         """
-
         containers_pids = self.get_containers_pids()
         
         # Search for container's tasks
@@ -243,7 +235,6 @@ class InspectCaps():
         tasks_list - A list of tasks, extracted from memory using Pslist plugin
         containers_pids - A list of containers pids to inspect 
         """
-
         self.context = context # Volatility req
         self.vmlinux = vmlinux # Volatility req
         self.tasks_list = tasks_list
@@ -254,7 +245,6 @@ class InspectCaps():
         Linux active capabilities are saved as a bits sequense where each bit is a flag for each capability.
         This function iterate each flag in seq and if it's active it adds the specific capability to the list as a string represents it's name.
         """
-        
         active_caps = []
         caps = abs(caps) # The method below doesn't work for negative numbers
         
@@ -271,7 +261,6 @@ class InspectCaps():
     
     def generate_containers_caps_list(self):
         """ This function iterate each container pid and convert its effective capabilities to list of caps """
-
         # Iterate each pid in containers list and search for it's task
         for pid in self.containers_pids:
             for task in self.tasks_list:
@@ -294,7 +283,6 @@ class InspectMounts():
         tasks_list - A list of tasks, extracted from memory using Pslist plugin
         containers_pids - A list of containers pids to inspect 
         """
-
         self.context = context # Volatility req
         self.vmlinux = vmlinux # Volatility req
         self.tasks_list = tasks_list
@@ -307,7 +295,6 @@ class InspectMounts():
             and compare it with it a whitelist that contains normal mounts paths.
         It returns: container pid, container_id and details about the mount taken from linux.mount.
         """
-
         # For each container, check for unusual mounts        
         for pid in self.containers_pids:
             pid_filter = pslist.PsList.create_pid_filter([pid]) 

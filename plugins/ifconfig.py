@@ -103,7 +103,6 @@ class Ifconfig(interfaces.plugins.PluginInterface):
         """Extract various information from a net device.
         Return the following tuple: name, ip addr, mac addr, is promiscuous.
         """
-
         """FIX ATTEMPT FINDINGS:
         The net_device struct has a few pointers to protocol-sepcific structs.
         ip_ptr points to a struct containing IPv4 specific info, and contains a list of in_ifaddr structs that contain info on an IPv4 address.
