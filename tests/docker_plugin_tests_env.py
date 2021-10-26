@@ -75,7 +75,6 @@ class Ps():
             processes that are bound to those shim processes 
             and returns their PIDs
         """
-
         containerd_processes_pids = list()
         containers_pids = list()
         
@@ -99,7 +98,6 @@ class Ps():
             and it iterates container's process mounts and search for 
             container_id which is the name of container's dir
         """
-
         # Iterate each mount in mounts list
         for mount in process_mounts:
             path = mount["Absolute Path"]
@@ -115,7 +113,6 @@ class Ps():
         This function generates a list of running containers in this format:
         container_id, command, created, is_privileged, pid
         """
-
         containers_pids = self.get_containers_pids()
         
         # Search for container's tasks
@@ -136,7 +133,6 @@ class InspectCaps():
         tasks_list - A list of tasks, extracted from memory using Pslist plugin
         containers_pids - A list of containers pids to inspect 
         """
-
         self.tasks_list = tasks_list
         self.containers_pids = containers_pids
 
@@ -145,7 +141,6 @@ class InspectCaps():
         Linux active capabilities are saved as a bits sequense where each bit is a flag for each capability.
         This function iterate each flag in seq and if it's active it adds the specific capability to the list as a string represents it's name.
         """
-        
         active_caps = list()
         caps = abs(caps) # The method below doesn't work for negative numbers
         
@@ -162,7 +157,6 @@ class InspectCaps():
     
     def generate_containers_caps_list(self):
         """ This function iterate each container pid and convert its effective capabilities to list of caps """
-
         # Iterate each pid in containers list and search for it's task
         for pid in self.containers_pids:
             for task in self.tasks_list:
