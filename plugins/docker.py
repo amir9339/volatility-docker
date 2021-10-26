@@ -392,7 +392,7 @@ class Docker(interfaces.plugins.PluginInterface) :
 
         if not self.config.get("detector") and not self.config.get("ps") \
             and not self.config.get("inspect-caps") and not self.config.get("inspect-mounts"):
-            vollog.error(f'No option selected')
+            vollog.error('No option selected')
             raise exceptions.PluginRequirementException('No option selected')
 
         if self.config.get("detector"):
