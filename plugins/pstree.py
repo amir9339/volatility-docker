@@ -22,14 +22,14 @@ class PsTree(pslist.PsList):
         seen = set([])
         seen.add(pid)
         level = 0
-        proc = self._processes.get(pid, None)
+        proc = self._processes.get(pid)
         while proc is not None and proc.parent != 0 and proc.parent.pid not in seen:
             ppid = int(proc.parent.pid)
 
             child_list = self._children.get(ppid, set([]))
             child_list.add(proc.pid)
             self._children[ppid] = child_list
-            proc = self._processes.get(ppid, None)
+            proc = self._processes.get(ppid)
             level += 1
         self._levels[pid] = level
 
