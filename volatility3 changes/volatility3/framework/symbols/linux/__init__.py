@@ -130,7 +130,8 @@ class LinuxUtilities(interfaces.configuration.VersionableInterface):
             kernel_module = context.modules[module_name]
             break
         else:
-            raise ValueError(f"No module using the symbol table {symbol_table}")
+            raise ValueError(
+                f"No module using the symbol table {symbol_table}")
 
         symbs = list(kernel_module.get_symbols_by_absolute_location(sym_addr))
 
@@ -204,7 +205,8 @@ class LinuxUtilities(interfaces.configuration.VersionableInterface):
 
         file_type = symbol_table + constants.BANG + 'file'
 
-        fds = objects.utility.array_of_pointers(fd_table, count = max_fds, subtype = file_type, context = context)
+        fds = objects.utility.array_of_pointers(
+            fd_table, count=max_fds, subtype=file_type, context=context)
 
         for (fd_num, filp) in enumerate(fds):
             if filp != 0:
@@ -242,7 +244,8 @@ class LinuxUtilities(interfaces.configuration.VersionableInterface):
         end_addr = end_addr.vol.offset & mask
 
         return [(constants.linux.KERNEL_NAME, start_addr, end_addr)] + \
-               LinuxUtilities.mask_mods_list(context, kernel.layer_name, mods_list)
+            LinuxUtilities.mask_mods_list(
+                context, kernel.layer_name, mods_list)
 
     @classmethod
     def lookup_module_address(cls, kernel_module: interfaces.context.ModuleInterface,
@@ -260,7 +263,8 @@ class LinuxUtilities(interfaces.configuration.VersionableInterface):
             if start <= target_address <= end:
                 mod_name = name
                 if name == constants.linux.KERNEL_NAME:
-                    symbols = list(kernel_module.get_symbols_by_absolute_location(target_address))
+                    symbols = list(
+                        kernel_module.get_symbols_by_absolute_location(target_address))
 
                     if len(symbols):
                         symbol_name = symbols[0].split(constants.BANG)[1] if constants.BANG in symbols[0] else \
@@ -273,7 +277,8 @@ class LinuxUtilities(interfaces.configuration.VersionableInterface):
     @classmethod
     def walk_internal_list(cls, vmlinux, struct_name, list_member, list_start):
         while list_start:
-            list_struct = vmlinux.object(object_type = struct_name, offset = list_start.vol.offset)
+            list_struct = vmlinux.object(
+                object_type=struct_name, offset=list_start.vol.offset)
             yield list_struct
             list_start = getattr(list_struct, list_member)
 
@@ -298,13 +303,13 @@ class LinuxUtilities(interfaces.configuration.VersionableInterface):
                 timeo = vmlinux.object_from_symbol('total_sleep_time')
             else:
                 timeo = extensions.VolTimespec(0, 0)
-        
+
         # timekeeper way
         elif has_timekeeper:
             timekeeper = vmlinux.object_from_symbol('timekeeper')
             wall = timekeeper.wall_to_monotonic
             timeo = timekeeper.total_sleep_time
-        
+
         elif has_tk_core:
             tk_core = vmlinux.object_from_symbol('tk_core')
             timekeeper = tk_core.timekeeper
@@ -313,7 +318,7 @@ class LinuxUtilities(interfaces.configuration.VersionableInterface):
             # 3.17(ish) - 3.19(ish) way
             if timekeeper.has_member('total_sleep_time'):
                 timeo = timekeeper.total_sleep_time
-            
+
             # 3.19(ish)+
             # getboottime from 3.19.x
             else:
@@ -321,16 +326,17 @@ class LinuxUtilities(interfaces.configuration.VersionableInterface):
                 oboot = timekeeper.offs_boot
 
                 if oreal.has_member('tv64'):
-                    tv64 = (oreal.tv64 & 0xffffffff) - (oboot.tv64 & 0xffffffff)
+                    tv64 = (oreal.tv64 & 0xffffffff) - \
+                        (oboot.tv64 & 0xffffffff)
                 else:
                     tv64 = (oreal & 0xffffffff) - (oboot & 0xffffffff)
-                
+
                 if tv64:
                     tv64 = (tv64 / 100000000) * -1
-                    timeo = extensions.VolTimespec(tv64, 0) 
+                    timeo = extensions.VolTimespec(tv64, 0)
                 else:
                     timeo = None
-        
+
         return (wall, timeo)
 
     @classmethod
