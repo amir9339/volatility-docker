@@ -11,39 +11,39 @@ from volatility3.plugins.linux import pslist, mount, ifconfig
 
 vollog = logging.getLogger(__name__)
 
-DOCKER_MAC_VENDOR_STARTER       = "02:42"
-DOCKER_INTERFACE_STARTER        = "docker"
-VETH_NAME_STARTER               = "eth"
-DOCKER_MOUNT_PATH               = "/var/lib/docker/"
-CONTAINERD_SHIM_PROC_STARTER    = "containerd-shim"
-OVERLAY                         = "overlay"
-CONTAINERD_PROCESS_COMMAND      = "containerd-shim"
-DOCKER_CGROUPS_PATH             = "/sys/fs/cgroup/memory/docker"
-DOCKER_CGROUPS_PATH_LEN         = 5
-PRIV_CONTAINER_EFF_CAPS         = 0x3fffffffff
+DOCKER_MAC_VENDOR_STARTER = "02:42"
+DOCKER_INTERFACE_STARTER = "docker"
+VETH_NAME_STARTER = "eth"
+DOCKER_MOUNT_PATH = "/var/lib/docker/"
+CONTAINERD_SHIM_PROC_STARTER = "containerd-shim"
+OVERLAY = "overlay"
+CONTAINERD_PROCESS_COMMAND = "containerd-shim"
+DOCKER_CGROUPS_PATH = "/sys/fs/cgroup/memory/docker"
+DOCKER_CGROUPS_PATH_LEN = 5
+PRIV_CONTAINER_EFF_CAPS = 0x3fffffffff
 
 MOUNTS_ABS_STARTING_PATH_WHITELIST = (
-    "-", # Interanl mount
-    "/sys/fs/cgroup", # Default mount
+    "-",  # Interanl mount
+    "/sys/fs/cgroup",  # Default mount
 )
 
 MOUNTS_ABS_ENDING_PATH_WHITELIST = (
-    "/merged", # Merged dir mount only, not sus
-    "/merged/dev", # Default mount
-    "/merged/etc/resolv.conf", # Default mount
-    "/merged/etc/hostname", # Default mount
-    "/merged/etc/hosts", # Default mount
-    "/merged/run/systemd/resolve/stub-resolv.conf" # Default mount
+    "/merged",  # Merged dir mount only, not sus
+    "/merged/dev",  # Default mount
+    "/merged/etc/resolv.conf",  # Default mount
+    "/merged/etc/hostname",  # Default mount
+    "/merged/etc/hosts",  # Default mount
+    "/merged/run/systemd/resolve/stub-resolv.conf"  # Default mount
 )
 
 MOUNTS_PATH_WHITELIST = (
-    "/proc", # Default mounts
-    "/sys" # Default mount
+    "/proc",  # Default mounts
+    "/sys"  # Default mount
 )
 
 CAPABILITIES = [
     # Defined at: https://elixir.bootlin.com/linux/v5.15-rc6/source/include/uapi/linux/capability.h
-    "CAP_CHOWN", 
+    "CAP_CHOWN",
     "CAP_DAC_OVERRIDE",
     "CAP_DAC_READ_SEARCH",
     "CAP_FOWNER",
@@ -86,15 +86,18 @@ CAPABILITIES = [
     "CAP_CHECKPOINT_RESTORE"
 ]
 
+
 class Detector():
     """ This class has set of functions for docker detection on system """
 
     def __init__(self, context, vmlinux, tasks_list) -> None:
-        self.context = context # Volatility req
-        self.vmlinux = vmlinux # Volatility req
-        self.tasks_list = tasks_list # Tasks objects list
-        self.mounts = mount.Mount.get_all_mounts(self.context, self.vmlinux.name) # Get mounts from plugin
-        self.net_devices = ifconfig.Ifconfig.get_devices_namespaces(self.context, self.vmlinux.name)
+        self.context = context  # Volatility req
+        self.vmlinux = vmlinux  # Volatility req
+        self.tasks_list = tasks_list  # Tasks objects list
+        self.mounts = mount.Mount.get_all_mounts(
+            self.context, self.vmlinux.name)  # Get mounts from plugin
+        self.net_devices = ifconfig.Ifconfig.get_devices_namespaces(
+            self.context, self.vmlinux.name)
 
     def _detect_docker_network_interface(self, name, mac_addr) -> bool:
         """ 
@@ -121,7 +124,7 @@ class Detector():
         """
 
         return OVERLAY in fstype and path.startswith(DOCKER_MOUNT_PATH)
-    
+
     def _detect_containerd_shim(self, proc_name) -> bool:
         """
         Containerd-shim is the parent process of all docker containers. Example can be seen in this output of `ps auxf` command:
@@ -143,37 +146,40 @@ class Detector():
         # Get processes list from memory using pslist plugin
         for task in self.tasks_list:
             proc_name = utility.array_to_string(task.comm)
-            
+
             if self._detect_containerd_shim(proc_name):
                 container_shim_running = True
                 break
-        
+
         # Get mounts list from mem using mount plugin and look for overlay FS mounts inside docker's dir
         for mnt in self.mounts:
 
-            id, pid, devname, path, abs_type, fstype, access, flags = mount.Mount.get_mount_info(mnt)
+            id, pid, devname, path, abs_type, fstype, access, flags = mount.Mount.get_mount_info(
+                mnt)
 
             if self._detect_overlay_fs(fstype, path):
                 overlay_fs_exists = True
                 break
-    
+
         # Look for docker related interfaces
         for net_dev in self.net_devices:
-            name, ip_addr, mac_addr, promisc = ifconfig.Ifconfig._gather_net_dev_info(self.context, self.vmlinux.name, net_dev)
+            name, ip_addr, mac_addr, promisc = ifconfig.Ifconfig._gather_net_dev_info(
+                self.context, self.vmlinux.name, net_dev)
 
             if self._detect_docker_network_interface(name, mac_addr):
                 docker_eth_exists = True
-            
+
             if self._detect_docker_veths(name, mac_addr):
                 docker_veth_exists = True
 
         yield docker_eth_exists, docker_veth_exists, overlay_fs_exists, container_shim_running
 
+
 class Ps():
     def __init__(self, context, vmlinux, tasks_list) -> None:
-        self.context = context # Volatility req
-        self.vmlinux = vmlinux # Volatility req
-        self.tasks_list = tasks_list # Tasks objects list
+        self.context = context  # Volatility req
+        self.vmlinux = vmlinux  # Volatility req
+        self.tasks_list = tasks_list  # Tasks objects list
 
     def get_containers_pids(self):
         """ 
@@ -186,7 +192,7 @@ class Ps():
 
         containerd_shim_processes_pids = []
         containers_pids = []
-        
+
         # Iterate processes list and search for "containerd-shim" processes which are bound to containers
         for task in self.tasks_list:
             comm = utility.array_to_string(task.comm)
@@ -200,7 +206,7 @@ class Ps():
             if task.parent.pid in containerd_shim_processes_pids:
                 containers_pids.append(task.pid)
         return containers_pids
-    
+
     def get_container_id(self, container_pid):
         """ 
         This function gets a PID of a container
@@ -210,20 +216,24 @@ class Ps():
             https://docs.docker.com/config/containers/runmetrics/
         """
 
-        pid_filter = pslist.PsList.create_pid_filter([container_pid]) 
-        process_mounts = mount.Mount.get_mounts(self.context, self.vmlinux.name, pid_filter) # Extract mounts for this process
-        process_mounts = [mount.Mount.get_mount_info(mnt) for mnt in process_mounts] # Extract mount info for each mount point
+        pid_filter = pslist.PsList.create_pid_filter([container_pid])
+        process_mounts = mount.Mount.get_mounts(
+            self.context, self.vmlinux.name, pid_filter)  # Extract mounts for this process
+        # Extract mount info for each mount point
+        process_mounts = [mount.Mount.get_mount_info(
+            mnt) for mnt in process_mounts]
 
         # Iterate each mount in mounts list
         for mnt_id, parent_id, devname, path, absolute_path, fs_type, access, flags in process_mounts:
-            
+
             splitted_path = absolute_path.split("/")
 
             # Search for container's merged dir (container's FS) under overlay or overlay2 dir
             if absolute_path.startswith(DOCKER_CGROUPS_PATH):
-                container_id = splitted_path[-1] # Extract container_id from path
+                # Extract container_id from path
+                container_id = splitted_path[-1]
                 return container_id
-    
+
     def generate_list(self, extended=True):
         """ 
         This function generates a list of running containers in this format:
@@ -231,7 +241,7 @@ class Ps():
         """
 
         containers_pids = self.get_containers_pids()
-        
+
         # Search for container's tasks
         for task in self.tasks_list:
             for pid in containers_pids:
@@ -240,16 +250,19 @@ class Ps():
                     container_id = self.get_container_id(task.pid)
 
                     # Extract creds from task and check if container runs as priv. Note that there is a class that checks the exact container's creds
-                    task_info = pslist.PsList.get_task_info(self.context, self.vmlinux.name, task, credinfo=True)
+                    task_info = pslist.PsList.get_task_info(
+                        self.context, self.vmlinux.name, task, credinfo=True)
                     creation_time = task_info.start_time
-                    creation_time = datetime.utcfromtimestamp(creation_time).isoformat(sep=' ', timespec='milliseconds')
+                    creation_time = datetime.utcfromtimestamp(
+                        creation_time).isoformat(sep=' ', timespec='milliseconds')
                     effective_uid = task_info.eff_uid
                     is_priv = task_info.cap_eff == PRIV_CONTAINER_EFF_CAPS
 
                     if extended:
                         yield creation_time, command, container_id, is_priv, pid, effective_uid
                     yield container_id[:11], command, creation_time, pid
-    
+
+
 class InspectCaps():
     """ This class has methods for capabilites extraction and convertion """
 
@@ -259,8 +272,8 @@ class InspectCaps():
         containers_pids - A list of containers pids to inspect 
         """
 
-        self.context = context # Volatility req
-        self.vmlinux = vmlinux # Volatility req
+        self.context = context  # Volatility req
+        self.vmlinux = vmlinux  # Volatility req
         self.tasks_list = tasks_list
         self.containers_pids = containers_pids
 
@@ -269,21 +282,21 @@ class InspectCaps():
         Linux active capabilities are saved as a bits sequense where each bit is a flag for each capability.
         This function iterate each flag in seq and if it's active it adds the specific capability to the list as a string represents it's name.
         """
-        
+
         active_caps = []
-        caps = abs(caps) # The method below doesn't work for negative numbers
-        
+        caps = abs(caps)  # The method below doesn't work for negative numbers
+
         bits_seq = bin(caps)[2:]
-        bits_seq = bits_seq[::-1] # Reverse flags seq
+        bits_seq = bits_seq[::-1]  # Reverse flags seq
 
         # For each flag in caps sequense, if cap is active, append to list
         for i, digit in enumerate(bits_seq):
-            
+
             # If flag is active, append the right cap to the list
             if digit == "1":
                 active_caps.append(CAPABILITIES[i])
         return active_caps
-    
+
     def generate_containers_caps_list(self):
         """ This function iterate each container pid and convert its effective capabilities to list of caps """
 
@@ -293,13 +306,17 @@ class InspectCaps():
                 if task.pid == pid:
 
                     # Get container-id from Ps class
-                    container_id = Ps(self.context, self.vmlinux, self.tasks_list).get_container_id(pid)
-                    
+                    container_id = Ps(self.context, self.vmlinux,
+                                      self.tasks_list).get_container_id(pid)
+
                     # Get task's creds
-                    task_info = pslist.PsList.get_task_info(self.context, self.vmlinux.name, task, credinfo=True)
+                    task_info = pslist.PsList.get_task_info(
+                        self.context, self.vmlinux.name, task, credinfo=True)
                     effective_caps = task_info.cap_eff
-                    effective_caps_list = self._caps_hex_to_string(effective_caps)
+                    effective_caps_list = self._caps_hex_to_string(
+                        effective_caps)
                     yield pid, container_id, hex(effective_caps), ','.join(effective_caps_list)
+
 
 class InspectMounts():
     """ This class has methods for interesting mounts extraction """
@@ -310,8 +327,8 @@ class InspectMounts():
         containers_pids - A list of containers pids to inspect 
         """
 
-        self.context = context # Volatility req
-        self.vmlinux = vmlinux # Volatility req
+        self.context = context  # Volatility req
+        self.vmlinux = vmlinux  # Volatility req
         self.tasks_list = tasks_list
         self.containers_pids = containers_pids
 
@@ -323,31 +340,38 @@ class InspectMounts():
         It returns: container pid, container_id and details about the mount taken from linux.mount.
         """
 
-        # For each container, check for unusual mounts        
+        # For each container, check for unusual mounts
         for pid in self.containers_pids:
             pid_filter = pslist.PsList.create_pid_filter([pid])
-            process_mounts = mount.Mount.get_mounts(self.context, self.vmlinux.name, pid_filter) # Extract mounts for this process
-            process_mounts = [mount.Mount.get_mount_info(mnt) for mnt in process_mounts] # Extract mount info for each mount point
+            process_mounts = mount.Mount.get_mounts(
+                self.context, self.vmlinux.name, pid_filter)  # Extract mounts for this process
+            # Extract mount info for each mount point
+            process_mounts = [mount.Mount.get_mount_info(
+                mnt) for mnt in process_mounts]
             # Iterate each mount in mounts list
             for mnt_id, parent_id, devname, path, absolute_path, fs_type, access, flags in process_mounts:
-                if (not absolute_path.startswith(MOUNTS_ABS_STARTING_PATH_WHITELIST) 
+                if (not absolute_path.startswith(MOUNTS_ABS_STARTING_PATH_WHITELIST)
                     and not absolute_path.endswith(MOUNTS_ABS_ENDING_PATH_WHITELIST)
-                    and not path.startswith(MOUNTS_PATH_WHITELIST)):
-                    
+                        and not path.startswith(MOUNTS_PATH_WHITELIST)):
+
                     # Get container-id from Ps class
-                    container_id = Ps(self.context, self.vmlinux, self.tasks_list).get_container_id(pid)
+                    container_id = Ps(self.context, self.vmlinux,
+                                      self.tasks_list).get_container_id(pid)
 
                     if extended:
                         yield pid, container_id, mnt_id, parent_id, devname, path, absolute_path, fs_type, access, flags
                     yield pid, container_id[:11], path, absolute_path, fs_type
 
+
 class NetworkLs():
     def __init__(self, context, vmlinux) -> None:
-        self.context = context # Volatility req
-        self.vmlinux = vmlinux # Volatility req
-        self.net_devices = ifconfig.Ifconfig.get_devices_namespaces(self.context, self.vmlinux.name)
+        self.context = context  # Volatility req
+        self.vmlinux = vmlinux  # Volatility req
+        self.net_devices = ifconfig.Ifconfig.get_devices_namespaces(
+            self.context, self.vmlinux.name)
 
-class Docker(interfaces.plugins.PluginInterface) :
+
+class Docker(interfaces.plugins.PluginInterface):
     """ Main class for docker plugin """
 
     _required_framework_version = (2, 0, 0)
@@ -356,84 +380,89 @@ class Docker(interfaces.plugins.PluginInterface) :
     @classmethod
     def get_requirements(cls) -> List[interfaces.configuration.RequirementInterface]:
         return [requirements.ModuleRequirement(name='kernel',
-                                            description='Linux kernel',
-                                            architectures=['Intel32', 'Intel64']),
-                requirements.PluginRequirement(name = 'pslist',
-                                                plugin = pslist.PsList, 
-                                                version = (2, 0, 0)),
-                requirements.PluginRequirement(name = 'mount', 
-                                                plugin = mount.Mount, 
-                                                version = (1, 0, 0)),
-                requirements.PluginRequirement(name = 'ifconfig', 
-                                                plugin = ifconfig.Ifconfig, 
-                                                version = (1, 0, 0)),
-                
+                                               description='Linux kernel',
+                                               architectures=['Intel32', 'Intel64']),
+                requirements.PluginRequirement(name='pslist',
+                                               plugin=pslist.PsList,
+                                               version=(2, 0, 0)),
+                requirements.PluginRequirement(name='mount',
+                                               plugin=mount.Mount,
+                                               version=(1, 0, 0)),
+                requirements.PluginRequirement(name='ifconfig',
+                                               plugin=ifconfig.Ifconfig,
+                                               version=(1, 0, 0)),
+
                 # Plugin options
                 requirements.BooleanRequirement(name='detector',
-                                            description='Detect Docker daemon / containers in memory',
-                                            optional=True,
-                                            default=False),
+                                                description='Detect Docker daemon / containers in memory',
+                                                optional=True,
+                                                default=False),
                 requirements.BooleanRequirement(name='ps',
-                                            description='List of running containers',
-                                            optional=True,
-                                            default=False),
+                                                description='List of running containers',
+                                                optional=True,
+                                                default=False),
                 requirements.BooleanRequirement(name='ps-extended',
-                                            description='Extended list of running containers',
-                                            optional=True,
-                                            default=False),
+                                                description='Extended list of running containers',
+                                                optional=True,
+                                                default=False),
                 requirements.BooleanRequirement(name='inspect-caps',
-                                            description='Inspect containers capabilities',
-                                            optional=True,
-                                            default=False),
+                                                description='Inspect containers capabilities',
+                                                optional=True,
+                                                default=False),
                 requirements.BooleanRequirement(name='inspect-mounts',
-                                            description='Show a list of containers mounts',
-                                            optional=True,
-                                            default=False),
+                                                description='Show a list of containers mounts',
+                                                optional=True,
+                                                default=False),
                 requirements.BooleanRequirement(name='inspect-mounts-extended',
-                                            description='Show detailed list of container\s mounts',
-                                            optional=True,
-                                            default=False),
+                                                description='Show detailed list of container\s mounts',
+                                                optional=True,
+                                                default=False),
                 ]
 
     def _generator(self):
 
         vmlinux = self.context.modules[self.config['kernel']]
 
-        tasks_list = list(pslist.PsList.list_tasks(self.context, vmlinux.name)) # Generate tasks list from memory using linux.pslist
+        # Generate tasks list from memory using linux.pslist
+        tasks_list = list(pslist.PsList.list_tasks(self.context, vmlinux.name))
 
         # If user chose detector, generate detection table
         if self.config.get("detector"):
-            detection_values = Detector(self.context, vmlinux ,tasks_list).generate_detection_list()
-            
+            detection_values = Detector(
+                self.context, vmlinux, tasks_list).generate_detection_list()
+
             # Actually there is only one row...
             for row in detection_values:
                 yield (0, row)
 
         # If user chose ps, generate containers list
         if self.config.get("ps"):
-            for container_row in Ps(self.context, vmlinux ,tasks_list).generate_list(extended=False):
+            for container_row in Ps(self.context, vmlinux, tasks_list).generate_list(extended=False):
                 yield (0, container_row)
 
         # If user chose ps, generate containers list
         if self.config.get("ps-extended"):
-            for container_row in Ps(self.context, vmlinux ,tasks_list).generate_list(extended=True):
+            for container_row in Ps(self.context, vmlinux, tasks_list).generate_list(extended=True):
                 yield (0, container_row)
 
         # If user chose inspect-caps, generate containers list and check their capabilities
         if self.config.get("inspect-caps"):
-            containers_pids = Ps(self.context, vmlinux ,tasks_list).get_containers_pids()
+            containers_pids = Ps(self.context, vmlinux,
+                                 tasks_list).get_containers_pids()
             for container_row in InspectCaps(self.context, vmlinux, tasks_list, containers_pids).generate_containers_caps_list():
                 yield (0, container_row)
 
         # If user chose inspect-mounts, generate containers list and check their mounts
         if self.config.get("inspect-mounts"):
-            containers_pids = Ps(self.context, vmlinux ,tasks_list).get_containers_pids()
+            containers_pids = Ps(self.context, vmlinux,
+                                 tasks_list).get_containers_pids()
             for container_row in InspectMounts(self.context, vmlinux, tasks_list, containers_pids).generate_mounts_list(extended=False):
                 yield (0, container_row)
 
         # If user chose inspect-mounts, generate containers list and check their mounts
         if self.config.get("inspect-mounts-extended"):
-            containers_pids = Ps(self.context, vmlinux ,tasks_list).get_containers_pids()
+            containers_pids = Ps(self.context, vmlinux,
+                                 tasks_list).get_containers_pids()
             for container_row in InspectMounts(self.context, vmlinux, tasks_list, containers_pids).generate_mounts_list(extended=True):
                 yield (0, container_row)
 
@@ -442,34 +471,35 @@ class Docker(interfaces.plugins.PluginInterface) :
         columns = []
 
         if not self.config.get("detector") and not self.config.get("inspect-caps") \
-            and not self.config.get("ps") and not self.config.get("ps-extended") \
-            and not self.config.get("inspect-mounts") and not self.config.get("inspect-mounts-extended"):
-            
+                and not self.config.get("ps") and not self.config.get("ps-extended") \
+                and not self.config.get("inspect-mounts") and not self.config.get("inspect-mounts-extended"):
+
             vollog.error('No option selected')
             raise exceptions.PluginRequirementException('No option selected')
 
         if self.config.get("detector"):
-            columns.extend([('Docker inetrface', bool), ('Docker veth', bool), 
+            columns.extend([('Docker inetrface', bool), ('Docker veth', bool),
                             ('Mounted overlay FS', bool), ('Containerd-shim is running', bool)])
 
         if self.config.get("ps"):
             columns.extend([('Container ID', str), ('Command', str), ('Creation time (UTC)', str),
                             ('PID', int)])
-        
+
         if self.config.get("ps-extended"):
             columns.extend([('Creation time (UTC)', str), ('Command', str), ('Container ID', str),
                             ('Is privileged', bool), ('PID', int), ('Effective UID', int)])
-        
+
         if self.config.get("inspect-caps"):
-            columns.extend([('PID', int), ('Container ID', str), ('Effective capabilities value', str), ('Effective capabilities names', str)])
-        
+            columns.extend([('PID', int), ('Container ID', str), (
+                'Effective capabilities value', str), ('Effective capabilities names', str)])
+
         if self.config.get("inspect-mounts"):
-            columns.extend([('PID', int), ('Container ID', str), ('Path', str), 
+            columns.extend([('PID', int), ('Container ID', str), ('Path', str),
                             ('Absolute Path', str), ('FS type', str)])
-        
+
         if self.config.get("inspect-mounts-extended"):
-            columns.extend([('PID', int), ('Container ID', str), ('Mount ID', int), 
-                            ('Parent ID', int) ,('Device name', str), ('Path', str), 
+            columns.extend([('PID', int), ('Container ID', str), ('Mount ID', int),
+                            ('Parent ID', int), ('Device name', str), ('Path', str),
                             ('Absolute Path', str), ('FS type', str), ('Access', str),
                             ('Flags', str)])
 
