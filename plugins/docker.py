@@ -19,11 +19,11 @@ CONTAINERD_SHIM_PROC_STARTER    = "containerd-shim"
 OVERLAY                         = "overlay"
 CONTAINERD_PROCESS_COMMAND      = "containerd-shim"
 DOCKER_CGROUPS_PATH             = "/sys/fs/cgroup/memory/docker"
-MERGED_DIR_PATH_LEN             = 5
-PRIV_CONTAINER_EFF_CAPS         = 274877906943 # 0x3fffffffff
+DOCKER_CGROUPS_PATH_LEN         = 5
+PRIV_CONTAINER_EFF_CAPS         = 0x3fffffffff
 
 MOUNTS_ABS_STARTING_PATH_WHITELIST = (
-    "-", # Interanl mount only
+    "-", # Interanl mount
     "/sys/fs/cgroup", # Default mount
 )
 
@@ -207,6 +207,7 @@ class Ps():
         It enumerates process's mount points using linux.mount
         Then, it iterates container's process mounts and search for 
             container_id which is the name of container's dir under cgroups dir
+            https://docs.docker.com/config/containers/runmetrics/
         """
 
         pid_filter = pslist.PsList.create_pid_filter([container_pid]) 
@@ -373,15 +374,23 @@ class Docker(interfaces.plugins.PluginInterface) :
                                             optional=True,
                                             default=False),
                 requirements.BooleanRequirement(name='ps',
-                                            description='List containers',
+                                            description='List of running containers',
+                                            optional=True,
+                                            default=False),
+                requirements.BooleanRequirement(name='ps-extended',
+                                            description='Extended list of running containers',
                                             optional=True,
                                             default=False),
                 requirements.BooleanRequirement(name='inspect-caps',
-                                            description='Inspect container\'s capabilities ',
+                                            description='Inspect containers capabilities',
                                             optional=True,
                                             default=False),
                 requirements.BooleanRequirement(name='inspect-mounts',
-                                            description='Inspect container\'s mounts',
+                                            description='Show a list of containers mounts',
+                                            optional=True,
+                                            default=False),
+                requirements.BooleanRequirement(name='inspect-mounts-extended',
+                                            description='Show detailed list of container\s mounts',
                                             optional=True,
                                             default=False),
                 ]
@@ -432,8 +441,10 @@ class Docker(interfaces.plugins.PluginInterface) :
 
         columns = []
 
-        if not self.config.get("detector") and not self.config.get("ps") \
-            and not self.config.get("inspect-caps") and not self.config.get("inspect-mounts"):
+        if not self.config.get("detector") and not self.config.get("inspect-caps") \
+            and not self.config.get("ps") and not self.config.get("ps-extended") \
+            and not self.config.get("inspect-mounts") and not self.config.get("inspect-mounts-extended"):
+            
             vollog.error(f'No option selected')
             raise exceptions.PluginRequirementException('No option selected')
 
