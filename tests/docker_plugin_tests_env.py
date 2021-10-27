@@ -1,8 +1,9 @@
+import json
 from datetime import datetime
 
 CAPABILITIES = [
     # Defined at: https://elixir.bootlin.com/linux/v5.15-rc6/source/include/uapi/linux/capability.h
-    "CAP_CHOWN", 
+    "CAP_CHOWN",
     "CAP_DAC_OVERRIDE",
     "CAP_DAC_READ_SEARCH",
     "CAP_FOWNER",
@@ -45,7 +46,6 @@ CAPABILITIES = [
     "CAP_CHECKPOINT_RESTORE"
 ]
 
-import json
 
 with open("tests/output_from_vol/pslist_cred.json") as f:
     f = f.read()
@@ -57,11 +57,12 @@ with open("tests/output_from_vol/mount_pid_6343.json") as f:
 
 ############################################################
 
-CONTAINERD_PROCESS_COMMAND  = "containerd-shim"
-DOCKER_OVERLAY_DIR_PATH     = "/var/lib/docker/overlay"
-MERGED_DIR                  = "merged"
-MERGED_DIR_PATH_LEN         = 7
-PRIV_CONTAINER_EFF_CAPS     = 274877906943
+CONTAINERD_PROCESS_COMMAND = "containerd-shim"
+DOCKER_OVERLAY_DIR_PATH = "/var/lib/docker/overlay"
+MERGED_DIR = "merged"
+MERGED_DIR_PATH_LEN = 7
+PRIV_CONTAINER_EFF_CAPS = 274877906943
+
 
 class Ps():
     def __init__(self, tasks_list) -> None:
@@ -77,21 +78,21 @@ class Ps():
         """
         containerd_processes_pids = list()
         containers_pids = list()
-        
+
         # Iterate processes list and search for "containerd-shim" processes which are bound to containers
         for ps in self.tasks_list:
-            
+
             # If the process is an instance of containerd-shim, append it's process id to list
             if ps["COMM"] == CONTAINERD_PROCESS_COMMAND:
                 containerd_processes_pids.append(ps["PID"])
-        
+
         # Search for containers that are bound to shim list
         for ps in self.tasks_list:
             if ps["PPID"] in containerd_processes_pids:
                 containers_pids.append(ps["PID"])
-        
+
         return containers_pids
-    
+
     def get_container_id(self, process_mounts):
         """ 
         This function gets a PID of a container 
@@ -105,16 +106,17 @@ class Ps():
 
             # Search for container's merged dir (container's FS) under overlay or overlay2 dir
             if path.startswith(DOCKER_OVERLAY_DIR_PATH) and path.endswith(MERGED_DIR) and len(splitted_path) == MERGED_DIR_PATH_LEN:
-                container_id = splitted_path[-2] # Extract container_id from path
+                # Extract container_id from path
+                container_id = splitted_path[-2]
                 return container_id
-    
+
     def generate_list(self):
         """ 
         This function generates a list of running containers in this format:
         container_id, command, created, is_privileged, pid
         """
         containers_pids = self.get_containers_pids()
-        
+
         # Search for container's tasks
         for task in self.tasks_list:
             for pid in containers_pids:
@@ -124,7 +126,8 @@ class Ps():
                     container_id = self.get_container_id(container_mounts)
                     is_priv = task["CapEff"] == PRIV_CONTAINER_EFF_CAPS
                     yield creation_time, command, container_id, is_priv, pid
-    
+
+
 class InspectCaps():
     """ This class has methods for capabilites extraction and convertion """
 
@@ -142,19 +145,19 @@ class InspectCaps():
         This function iterate each flag in seq and if it's active it adds the specific capability to the list as a string represents it's name.
         """
         active_caps = list()
-        caps = abs(caps) # The method below doesn't work for negative numbers
-        
+        caps = abs(caps)  # The method below doesn't work for negative numbers
+
         bits_seq = bin(caps)[2:]
-        bits_seq = bits_seq[::-1] # Reverse flags seq
+        bits_seq = bits_seq[::-1]  # Reverse flags seq
 
         # For each flag in caps sequense, if cap is active, append to list
         for i, digit in enumerate(bits_seq):
-            
+
             # If flag is active, append the right cap to the list
             if digit == "1":
                 active_caps.append(CAPABILITIES[i])
         return active_caps
-    
+
     def generate_containers_caps_list(self):
         """ This function iterate each container pid and convert its effective capabilities to list of caps """
         # Iterate each pid in containers list and search for it's task
@@ -162,9 +165,9 @@ class InspectCaps():
             for task in self.tasks_list:
                 if task["PID"] == pid:
                     effective_caps = task["CapEff"]
-                    effective_caps_list = self._caps_hex_to_string(effective_caps)
+                    effective_caps_list = self._caps_hex_to_string(
+                        effective_caps)
                     yield pid, effective_caps, effective_caps_list
-
 
 
 docker_ps = Ps(pslist)
