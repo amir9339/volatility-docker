@@ -18,15 +18,27 @@ DOCKER_MOUNT_PATH               = "/var/lib/docker/"
 CONTAINERD_SHIM_PROC_STARTER    = "containerd-shim"
 OVERLAY                         = "overlay"
 CONTAINERD_PROCESS_COMMAND      = "containerd-shim"
-DOCKER_OVERLAY_DIR_PATH         = "/var/lib/docker/overlay"
-MERGED_DIR                      = "merged"
-MERGED_DIR_PATH_LEN             = 7
+DOCKER_CGROUPS_PATH             = "/sys/fs/cgroup/memory/docker"
+MERGED_DIR_PATH_LEN             = 5
 PRIV_CONTAINER_EFF_CAPS         = 274877906943 # 0x3fffffffff
 
-MOUNTS_WHITELIST = (
-    "-",
-    "/var/lib/docker/overlay",
-    "/sys/fs/cgroup",
+MOUNTS_ABS_STARTING_PATH_WHITELIST = (
+    "-", # Interanl mount only
+    "/sys/fs/cgroup", # Default mount
+)
+
+MOUNTS_ABS_ENDING_PATH_WHITELIST = (
+    "/merged", # Merged dir mount only, not sus
+    "/merged/dev", # Default mount
+    "/merged/etc/resolv.conf", # Default mount
+    "/merged/etc/hostname", # Default mount
+    "/merged/etc/hosts", # Default mount
+    "/merged/run/systemd/resolve/stub-resolv.conf" # Default mount
+)
+
+MOUNTS_PATH_WHITELIST = (
+    "/proc", # Default mounts
+    "/sys" # Default mount
 )
 
 CAPABILITIES = [
@@ -89,6 +101,7 @@ class Detector():
         This function search for an docker standard interface. 
         Looking for an interface whose name starts with 'docker' and its MAC vendor starts with '02:42' (the last 4 bytes are calculated on the fly)
         """
+
         return name.startswith(DOCKER_INTERFACE_STARTER) and mac_addr.startswith(DOCKER_MAC_VENDOR_STARTER)
 
     def _detect_docker_veths(self, name, mac_addr) -> bool:
@@ -97,6 +110,7 @@ class Detector():
         Almost the same way as in _detect_docker_network_interface function.
         It looking for interfaces starting with the name 'eth' and the MAC address '02:42'
         """
+
         return name.startswith(VETH_NAME_STARTER) and mac_addr.startswith(DOCKER_MAC_VENDOR_STARTER)
 
     def _detect_overlay_fs(self, fstype, path) -> bool:
@@ -105,6 +119,7 @@ class Detector():
             /var/lib/docker/
         These FS are used as container's FS
         """
+
         return OVERLAY in fstype and path.startswith(DOCKER_MOUNT_PATH)
     
     def _detect_containerd_shim(self, proc_name) -> bool:
@@ -114,12 +129,14 @@ class Detector():
             root        6417   2508    68 16:00  \_ sleep 3000
         This function is looking for a process of containerd-shim in processes list
         """
+
         return CONTAINERD_SHIM_PROC_STARTER in proc_name
 
     def generate_detection_list(self):
         """ 
         This function generates a list of values that indicates a presence of containers / docker daemon on machine 
         """
+
         # Set default values
         docker_eth_exists, docker_veth_exists, overlay_fs_exists, container_shim_running = False, False, False, False
 
@@ -166,6 +183,7 @@ class Ps():
             processes that are bound to those shim processes 
             and returns their PIDs
         """
+
         containerd_shim_processes_pids = []
         containers_pids = []
         
@@ -188,8 +206,9 @@ class Ps():
         This function gets a PID of a container
         It enumerates process's mount points using linux.mount
         Then, it iterates container's process mounts and search for 
-            container_id which is the name of container's dir
+            container_id which is the name of container's dir under cgroups dir
         """
+
         pid_filter = pslist.PsList.create_pid_filter([container_pid]) 
         process_mounts = mount.Mount.get_mounts(self.context, self.vmlinux.name, pid_filter) # Extract mounts for this process
         process_mounts = [mount.Mount.get_mount_info(mnt) for mnt in process_mounts] # Extract mount info for each mount point
@@ -200,15 +219,16 @@ class Ps():
             splitted_path = absolute_path.split("/")
 
             # Search for container's merged dir (container's FS) under overlay or overlay2 dir
-            if absolute_path.startswith(DOCKER_OVERLAY_DIR_PATH) and absolute_path.endswith(MERGED_DIR) and len(splitted_path) == MERGED_DIR_PATH_LEN:
-                container_id = splitted_path[-2] # Extract container_id from path
+            if absolute_path.startswith(DOCKER_CGROUPS_PATH):
+                container_id = splitted_path[-1] # Extract container_id from path
                 return container_id
     
-    def generate_list(self):
+    def generate_list(self, extended=True):
         """ 
         This function generates a list of running containers in this format:
         creation_time, command, container_id, is_priv, pid
         """
+
         containers_pids = self.get_containers_pids()
         
         # Search for container's tasks
@@ -225,7 +245,9 @@ class Ps():
                     effective_uid = task_info.eff_uid
                     is_priv = task_info.cap_eff == PRIV_CONTAINER_EFF_CAPS
 
-                    yield creation_time, command, container_id, is_priv, pid, effective_uid
+                    if extended:
+                        yield creation_time, command, container_id, is_priv, pid, effective_uid
+                    yield container_id[:11], command, creation_time, pid
     
 class InspectCaps():
     """ This class has methods for capabilites extraction and convertion """
@@ -235,6 +257,7 @@ class InspectCaps():
         tasks_list - A list of tasks, extracted from memory using Pslist plugin
         containers_pids - A list of containers pids to inspect 
         """
+
         self.context = context # Volatility req
         self.vmlinux = vmlinux # Volatility req
         self.tasks_list = tasks_list
@@ -245,6 +268,7 @@ class InspectCaps():
         Linux active capabilities are saved as a bits sequense where each bit is a flag for each capability.
         This function iterate each flag in seq and if it's active it adds the specific capability to the list as a string represents it's name.
         """
+        
         active_caps = []
         caps = abs(caps) # The method below doesn't work for negative numbers
         
@@ -261,6 +285,7 @@ class InspectCaps():
     
     def generate_containers_caps_list(self):
         """ This function iterate each container pid and convert its effective capabilities to list of caps """
+
         # Iterate each pid in containers list and search for it's task
         for pid in self.containers_pids:
             for task in self.tasks_list:
@@ -283,31 +308,37 @@ class InspectMounts():
         tasks_list - A list of tasks, extracted from memory using Pslist plugin
         containers_pids - A list of containers pids to inspect 
         """
+
         self.context = context # Volatility req
         self.vmlinux = vmlinux # Volatility req
         self.tasks_list = tasks_list
         self.containers_pids = containers_pids
 
-    def generate_mounts_list(self):
+    def generate_mounts_list(self, extended=True):
         """
         This function generates a list of containers unusual mount points.
         For each container that Ps class found it checks for mounts in it mount namespace 
             and compare it with it a whitelist that contains normal mounts paths.
         It returns: container pid, container_id and details about the mount taken from linux.mount.
         """
+
         # For each container, check for unusual mounts        
         for pid in self.containers_pids:
-            pid_filter = pslist.PsList.create_pid_filter([pid]) 
+            pid_filter = pslist.PsList.create_pid_filter([pid])
             process_mounts = mount.Mount.get_mounts(self.context, self.vmlinux.name, pid_filter) # Extract mounts for this process
             process_mounts = [mount.Mount.get_mount_info(mnt) for mnt in process_mounts] # Extract mount info for each mount point
-
             # Iterate each mount in mounts list
             for mnt_id, parent_id, devname, path, absolute_path, fs_type, access, flags in process_mounts:
-                if not absolute_path.startswith(MOUNTS_WHITELIST):
+                if (not absolute_path.startswith(MOUNTS_ABS_STARTING_PATH_WHITELIST) 
+                    and not absolute_path.endswith(MOUNTS_ABS_ENDING_PATH_WHITELIST)
+                    and not path.startswith(MOUNTS_PATH_WHITELIST)):
                     
                     # Get container-id from Ps class
                     container_id = Ps(self.context, self.vmlinux, self.tasks_list).get_container_id(pid)
-                    yield pid, container_id, mnt_id, parent_id, devname, path, absolute_path, fs_type, access, flags
+
+                    if extended:
+                        yield pid, container_id, mnt_id, parent_id, devname, path, absolute_path, fs_type, access, flags
+                    yield pid, container_id[:11], path, absolute_path, fs_type
 
 class NetworkLs():
     def __init__(self, context, vmlinux) -> None:
@@ -371,7 +402,12 @@ class Docker(interfaces.plugins.PluginInterface) :
 
         # If user chose ps, generate containers list
         if self.config.get("ps"):
-            for container_row in Ps(self.context, vmlinux ,tasks_list).generate_list():
+            for container_row in Ps(self.context, vmlinux ,tasks_list).generate_list(extended=False):
+                yield (0, container_row)
+
+        # If user chose ps, generate containers list
+        if self.config.get("ps-extended"):
+            for container_row in Ps(self.context, vmlinux ,tasks_list).generate_list(extended=True):
                 yield (0, container_row)
 
         # If user chose inspect-caps, generate containers list and check their capabilities
@@ -379,11 +415,17 @@ class Docker(interfaces.plugins.PluginInterface) :
             containers_pids = Ps(self.context, vmlinux ,tasks_list).get_containers_pids()
             for container_row in InspectCaps(self.context, vmlinux, tasks_list, containers_pids).generate_containers_caps_list():
                 yield (0, container_row)
-        
+
         # If user chose inspect-mounts, generate containers list and check their mounts
         if self.config.get("inspect-mounts"):
             containers_pids = Ps(self.context, vmlinux ,tasks_list).get_containers_pids()
-            for container_row in InspectMounts(self.context, vmlinux, tasks_list, containers_pids).generate_mounts_list():
+            for container_row in InspectMounts(self.context, vmlinux, tasks_list, containers_pids).generate_mounts_list(extended=False):
+                yield (0, container_row)
+
+        # If user chose inspect-mounts, generate containers list and check their mounts
+        if self.config.get("inspect-mounts-extended"):
+            containers_pids = Ps(self.context, vmlinux ,tasks_list).get_containers_pids()
+            for container_row in InspectMounts(self.context, vmlinux, tasks_list, containers_pids).generate_mounts_list(extended=True):
                 yield (0, container_row)
 
     def run(self):
@@ -392,7 +434,7 @@ class Docker(interfaces.plugins.PluginInterface) :
 
         if not self.config.get("detector") and not self.config.get("ps") \
             and not self.config.get("inspect-caps") and not self.config.get("inspect-mounts"):
-            vollog.error('No option selected')
+            vollog.error(f'No option selected')
             raise exceptions.PluginRequirementException('No option selected')
 
         if self.config.get("detector"):
@@ -400,6 +442,10 @@ class Docker(interfaces.plugins.PluginInterface) :
                             ('Mounted overlay FS', bool), ('Containerd-shim is running', bool)])
 
         if self.config.get("ps"):
+            columns.extend([('Container ID', str), ('Command', str), ('Creation time (UTC)', str),
+                            ('PID', int)])
+        
+        if self.config.get("ps-extended"):
             columns.extend([('Creation time (UTC)', str), ('Command', str), ('Container ID', str),
                             ('Is privileged', bool), ('PID', int), ('Effective UID', int)])
         
@@ -407,6 +453,10 @@ class Docker(interfaces.plugins.PluginInterface) :
             columns.extend([('PID', int), ('Container ID', str), ('Effective capabilities value', str), ('Effective capabilities names', str)])
         
         if self.config.get("inspect-mounts"):
+            columns.extend([('PID', int), ('Container ID', str), ('Path', str), 
+                            ('Absolute Path', str), ('FS type', str)])
+        
+        if self.config.get("inspect-mounts-extended"):
             columns.extend([('PID', int), ('Container ID', str), ('Mount ID', int), 
                             ('Parent ID', int) ,('Device name', str), ('Path', str), 
                             ('Absolute Path', str), ('FS type', str), ('Access', str),
