@@ -18,6 +18,7 @@ vollog = logging.getLogger(__name__)
 
 # Keep these in a basic module, to prevent import cycles when symbol providers require them
 
+
 class VolTimespec:
     def __init__(self, secs: int, nsecs: int):
         self.tv_sec = secs
@@ -39,7 +40,8 @@ class module(generic.GenericIntelProcess):
         elif self.has_member("init_size"):
             return self.init_size
 
-        raise AttributeError("module -> get_init_size: Unable to determine .init section size of module")
+        raise AttributeError(
+            "module -> get_init_size: Unable to determine .init section size of module")
 
     def get_core_size(self):
         if self.has_member("core_layout"):
@@ -48,7 +50,8 @@ class module(generic.GenericIntelProcess):
         elif self.has_member("core_size"):
             return self.core_size
 
-        raise AttributeError("module -> get_core_size: Unable to determine core size of module")
+        raise AttributeError(
+            "module -> get_core_size: Unable to determine core size of module")
 
     def get_module_core(self):
         if self.has_member("core_layout"):
@@ -56,7 +59,8 @@ class module(generic.GenericIntelProcess):
         elif self.has_member("module_core"):
             return self.module_core
 
-        raise AttributeError("module -> get_module_core: Unable to get module core")
+        raise AttributeError(
+            "module -> get_module_core: Unable to get module core")
 
     def get_module_init(self):
         if self.has_member("init_layout"):
@@ -64,7 +68,8 @@ class module(generic.GenericIntelProcess):
         elif self.has_member("module_init"):
             return self.module_init
 
-        raise AttributeError("module -> get_module_core: Unable to get module init")
+        raise AttributeError(
+            "module -> get_module_core: Unable to get module init")
 
     def get_name(self):
         """ Get the name of the module as a string """
@@ -74,10 +79,11 @@ class module(generic.GenericIntelProcess):
         """ Try to determine the number of valid sections """
         arr = self._context.object(
             self.get_symbol_table().name + constants.BANG + "array",
-            layer_name = self.vol.layer_name,
-            offset = grp.attrs,
-            subtype = self._context.symbol_space.get_type(self.get_symbol_table().name + constants.BANG + "pointer"),
-            count = 25)
+            layer_name=self.vol.layer_name,
+            offset=grp.attrs,
+            subtype=self._context.symbol_space.get_type(
+                self.get_symbol_table().name + constants.BANG + "pointer"),
+            count=25)
 
         idx = 0
         while arr[idx]:
@@ -93,11 +99,11 @@ class module(generic.GenericIntelProcess):
             num_sects = self._get_sect_count(self.sect_attrs.grp)
 
         arr = self._context.object(self.get_symbol_table().name + constants.BANG + "array",
-                                   layer_name = self.vol.layer_name,
-                                   offset = self.sect_attrs.attrs.vol.offset,
-                                   subtype = self._context.symbol_space.get_type(self.get_symbol_table().name +
-                                                                                 constants.BANG + 'module_sect_attr'),
-                                   count = num_sects)
+                                   layer_name=self.vol.layer_name,
+                                   offset=self.sect_attrs.attrs.vol.offset,
+                                   subtype=self._context.symbol_space.get_type(self.get_symbol_table().name +
+                                                                               constants.BANG + 'module_sect_attr'),
+                                   count=num_sects)
 
         for attr in arr:
             yield attr
@@ -112,15 +118,16 @@ class module(generic.GenericIntelProcess):
                                                                  self.config_path,
                                                                  "linux",
                                                                  "elf",
-                                                                 native_types = None,
-                                                                 class_types = extensions.elf.class_types)
+                                                                 native_types=None,
+                                                                 class_types=extensions.elf.class_types)
 
         syms = self._context.object(
             self.get_symbol_table().name + constants.BANG + "array",
-            layer_name = self.vol.layer_name,
-            offset = self.section_symtab,
-            subtype = self._context.symbol_space.get_type(elf_table_name + constants.BANG + prefix + "Sym"),
-            count = self.num_symtab + 1)
+            layer_name=self.vol.layer_name,
+            offset=self.section_symtab,
+            subtype=self._context.symbol_space.get_type(
+                elf_table_name + constants.BANG + prefix + "Sym"),
+            count=self.num_symtab + 1)
         if self.section_strtab:
             for sym in syms:
                 sym.set_cached_strtab(self.section_strtab)
@@ -150,7 +157,8 @@ class module(generic.GenericIntelProcess):
         elif self.has_member("num_symtab"):
             return int(self.num_symtab)
 
-        raise AttributeError("module -> num_symtab: Unable to determine number of symbols")
+        raise AttributeError(
+            "module -> num_symtab: Unable to determine number of symbols")
 
     @property
     def section_strtab(self):
@@ -179,7 +187,8 @@ class task_struct(generic.GenericIntelProcess):
             return None
 
         if not isinstance(parent_layer, linear.LinearlyMappedLayer):
-            raise TypeError("Parent layer is not a translation layer, unable to construct process layer")
+            raise TypeError(
+                "Parent layer is not a translation layer, unable to construct process layer")
 
         dtb, layer_name = parent_layer.translate(pgd)
         if not dtb:
@@ -202,7 +211,8 @@ class task_struct(generic.GenericIntelProcess):
                 continue
             else:
                 # FIXME: Check if this actually needs to be printed out or not
-                vollog.info(f"adding vma: {start:x} {self.mm.brk:x} | {end:x} {self.mm.start_brk:x}")
+                vollog.info(
+                    f"adding vma: {start:x} {self.mm.brk:x} | {end:x} {self.mm.start_brk:x}")
 
             yield (start, end - start)
 
@@ -220,15 +230,15 @@ class task_struct(generic.GenericIntelProcess):
         except IndexError:
             thread_pid.numbers.count = thread_pid.level + 1
             return thread_pid.numbers[thread_pid.level]
-    
+
     def get_pid_ns(self):
         """Returns the pid_namespace struct of the current task."""
         return self._get_upid().ns.dereference()
-    
+
     def get_namespace_pid(self):
         """Returns the pid of the task as it is seen from within its pid namespace."""
         return self._get_upid().nr
-    
+
     def get_mnt_ns(self):
         """Returns the mnt_namespace struct of the current task."""
         if self.has_member('nsproxy'):
@@ -237,7 +247,7 @@ class task_struct(generic.GenericIntelProcess):
             return self.namespace.dereference()
         else:
             raise AttributeError('Unable to find task -> mnt_namespace')
-    
+
     def get_start_time(self, boot_time: int) -> int:
         """Returns the start time of the task as a Unix timestamp."""
         if self.has_member('real_start_time'):
@@ -247,7 +257,8 @@ class task_struct(generic.GenericIntelProcess):
 
         nsecs_per_sec = 1000000000
         start_time = VolTimespec(start_time / nsecs_per_sec, 0)
-        start_secs = start_time.tv_sec + (start_time.tv_nsec / nsecs_per_sec / 100)
+        start_secs = start_time.tv_sec + \
+            (start_time.tv_nsec / nsecs_per_sec / 100)
 
         if boot_time != -1:
             return boot_time + start_secs
@@ -380,7 +391,8 @@ class vm_area_struct(objects.StructType):
 
     def get_name(self, context, task):
         if self.vm_file != 0:
-            fname = linux.LinuxUtilities.path_for_file(context, task, self.vm_file)
+            fname = linux.LinuxUtilities.path_for_file(
+                context, task, self.vm_file)
         elif self.vm_start <= task.mm.start_brk and self.vm_end >= task.mm.brk:
             fname = "[heap]"
         elif self.vm_start <= task.mm.start_stack and self.vm_end >= task.mm.start_stack:
@@ -427,7 +439,7 @@ class dentry(objects.StructType):
 
     def path(self) -> str:
         return self.d_name.name_as_str()
-    
+
     def get_root(self):
         root = self
         while int(root.d_parent) != root.vol.offset:
@@ -477,7 +489,8 @@ class list_head(objects.StructType, collections.abc.Iterable):
         """
         layer = layer or self.vol.layer_name
 
-        relative_offset = self._context.symbol_space.get_type(symbol_type).relative_child_offset(member)
+        relative_offset = self._context.symbol_space.get_type(
+            symbol_type).relative_child_offset(member)
 
         direction = 'prev'
         if forward:
@@ -488,12 +501,13 @@ class list_head(objects.StructType, collections.abc.Iterable):
             return
 
         if not sentinel:
-            yield self._context.object(symbol_type, layer, offset = self.vol.offset - relative_offset)
+            yield self._context.object(symbol_type, layer, offset=self.vol.offset - relative_offset)
 
         seen = {self.vol.offset}
         while link.vol.offset not in seen:
 
-            obj = self._context.object(symbol_type, layer, offset = link.vol.offset - relative_offset)
+            obj = self._context.object(
+                symbol_type, layer, offset=link.vol.offset - relative_offset)
             yield obj
 
             seen.add(link.vol.offset)
@@ -529,7 +543,8 @@ class hlist_node(objects.StructType, collections.abc.Iterable):
         """
         layer = layer or self.vol.layer_name
 
-        relative_offset = self._context.symbol_space.get_type(symbol_type).relative_child_offset(member)
+        relative_offset = self._context.symbol_space.get_type(
+            symbol_type).relative_child_offset(member)
 
         direction = 'pprev'
         if forward:
@@ -540,12 +555,13 @@ class hlist_node(objects.StructType, collections.abc.Iterable):
             return
 
         if not sentinel:
-            yield self._context.object(symbol_type, layer, offset = self.vol.offset - relative_offset)
+            yield self._context.object(symbol_type, layer, offset=self.vol.offset - relative_offset)
 
         seen = {self.vol.offset}
         while link.vol.offset != 0 and link.vol.offset not in seen:
 
-            obj = self._context.object(symbol_type, layer, offset = link.vol.offset - relative_offset)
+            obj = self._context.object(
+                symbol_type, layer, offset=link.vol.offset - relative_offset)
             yield obj
 
             seen.add(link.vol.offset)
@@ -574,7 +590,8 @@ class files_struct(objects.StructType):
         elif self.has_member("max_fds"):
             return self.max_fds
         else:
-            raise AttributeError("Unable to find files -> maximum file descriptors")
+            raise AttributeError(
+                "Unable to find files -> maximum file descriptors")
 
 
 class mount(objects.StructType):
@@ -608,7 +625,7 @@ class mount(objects.StructType):
 
     def get_mnt_mountpoint(self):
         return self.mnt_mountpoint
-    
+
     def get_mnt_ns(self):
         if self.has_member('mnt_ns'):
             return self.mnt_ns
@@ -622,15 +639,16 @@ class vfsmount(objects.StructType):
 
     def is_valid(self):
         return self.get_mnt_sb() != 0 and \
-               self.get_mnt_root() != 0 and \
-               self.get_mnt_parent() != 0
+            self.get_mnt_root() != 0 and \
+            self.get_mnt_parent() != 0
 
     def _get_real_mnt(self):
         table_name = self.vol.type_name.split(constants.BANG)[0]
         mount_struct = f"{table_name}{constants.BANG}mount"
-        offset = self._context.symbol_space.get_type(mount_struct).relative_child_offset("mnt")
+        offset = self._context.symbol_space.get_type(
+            mount_struct).relative_child_offset("mnt")
 
-        return self._context.object(mount_struct, self.vol.layer_name, offset = self.vol.offset - offset)
+        return self._context.object(mount_struct, self.vol.layer_name, offset=self.vol.offset - offset)
 
     def get_mnt_parent(self):
         if self.has_member("mnt_parent"):
@@ -672,21 +690,22 @@ class nsproxy(objects.StructType):
             return self.ipc_ns.dereference()
         else:
             raise AttributeError('Unable to find nsproxy -> ipc_ns')
-    
+
     def get_mnt_ns(self):
         if self.has_member('mnt_ns'):
             return self.mnt_ns.dereference()
         elif self.has_member('namespace'):
             return self.namespace.dereference()
         else:
-            raise AttributeError('Unable to find nsproxy -> mnt_ns or nsproxy -> namespace')
-        
+            raise AttributeError(
+                'Unable to find nsproxy -> mnt_ns or nsproxy -> namespace')
+
     def get_net_ns(self):
         if self.has_member('net_ns'):
             return self.net_ns.dereference()
         else:
             raise AttributeError('Unable to find nsproxy -> net_ns')
-    
+
     def get_user_ns(self):
         ipc_ns = self.get_ipc_ns()
 
