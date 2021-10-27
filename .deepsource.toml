@@ -1,9 +1,9 @@
 version = 1
 
 exclude_patterns = [
-  "documented plugins/",
-  "tests/",
-  "volatility3 changes/"
+  "documented plugins/**",
+  "tests/**",
+  "volatility3 changes/**"
 ]
 
 [[analyzers]]
