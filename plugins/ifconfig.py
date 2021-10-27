@@ -6,11 +6,13 @@ from volatility3.framework.configuration import requirements
 from volatility3.framework.renderers import conversion
 from volatility3.framework.objects import utility
 
-MAX_STRING  = 256
-IFNAMSIZ    = 16 # This is a constant for if (interface) name size (a property of net_device struct)
-                 # https://elixir.bootlin.com/linux/latest/source/include/linux/netdevice.h#L1932
+MAX_STRING = 256
+# This is a constant for if (interface) name size (a property of net_device struct)
+IFNAMSIZ = 16
+# https://elixir.bootlin.com/linux/latest/source/include/linux/netdevice.h#L1932
 
 vollog = logging.getLogger(__name__)
+
 
 class Ifconfig(interfaces.plugins.PluginInterface):
     """ Ifconfig emulation plugin """
@@ -20,29 +22,31 @@ class Ifconfig(interfaces.plugins.PluginInterface):
     _version = (1, 0, 0)
 
     @classmethod
-    def get_devices_namespaces(cls,         
+    def get_devices_namespaces(cls,
                                context: interfaces.context.ContextInterface,
                                vmlinux_module_name: str) -> Iterable[interfaces.objects.ObjectInterface]:
         """Walk the list of net namespaces and extract all net devices from them (kernel >= 2.6.24)."""
         vmlinux = context.modules[vmlinux_module_name]
         symbol_table = vmlinux.symbol_table_name
 
-        net_namespace_list = vmlinux.object_from_symbol(symbol_name='net_namespace_list')
-        
-        # Enumerate each network namespace (struct net) in memory and pass the first one 
+        net_namespace_list = vmlinux.object_from_symbol(
+            symbol_name='net_namespace_list')
+
+        # Enumerate each network namespace (struct net) in memory and pass the first one
         for net_ns in net_namespace_list.to_list(symbol_table + constants.BANG + 'net', 'list', sentinel=True):
             # for each net namespace, walk the list of net devices
             for net_dev in net_ns.dev_base_head.to_list(symbol_table + constants.BANG + 'net_device', 'dev_list', sentinel=True):
                 yield net_dev
-    
+
     @classmethod
     def _get_devs_base(cls,
-        context: interfaces.context.ContextInterface,
-        vmlinux_module_name: str) -> Iterable[interfaces.objects.ObjectInterface]:
+                       context: interfaces.context.ContextInterface,
+                       vmlinux_module_name: str) -> Iterable[interfaces.objects.ObjectInterface]:
         """Walk the list of net devices headed by dev_base (kernel < 2.6.22)."""
         vmlinux = context.modules[vmlinux_module_name]
 
-        first_net_device = vmlinux.object_from_symbol(symbol_name='dev_base').dereference()
+        first_net_device = vmlinux.object_from_symbol(
+            symbol_name='dev_base').dereference()
 
         for net_dev in symbols.linux.LinuxUtilities.walk_internal_list(vmlinux, 'net_device', 'next', first_net_device):
             yield net_dev
@@ -64,8 +68,9 @@ class Ifconfig(interfaces.plugins.PluginInterface):
         # If net_dev symbol has perm_addr member (An array which represents MAC addr) get it.
         if net_dev.has_member("perm_addr"):
             hwaddr = net_dev.perm_addr
-            return ":".join(["{0:02x}".format(x) for x in hwaddr][:6]) # Join address in the standard format
-    
+            # Join address in the standard format
+            return ":".join(["{0:02x}".format(x) for x in hwaddr][:6])
+
     @classmethod
     def _parse_promisc_mode_from_net_dev(cls, net_dev):
         """ 
@@ -73,7 +78,7 @@ class Ifconfig(interfaces.plugins.PluginInterface):
         The function checks the flags that are an int property of net_device struct
         """
         return net_dev.flags & 0x100 == 0x100
-    
+
     @classmethod
     def _parse_ifa_value(cls, net_dev):
         """ 
@@ -90,9 +95,11 @@ class Ifconfig(interfaces.plugins.PluginInterface):
         # Walk each interface in this list
         while ifa_list:
             ip_addr = ifa_list.ifa_address
-            ip_addr = conversion.convert_ipv4(ip_addr) # Convert IP address from integer to a valid string
-            
-            name = ifa_list.ifa_label # Interface name from interface struct (struct in_ifaddr)
+            # Convert IP address from integer to a valid string
+            ip_addr = conversion.convert_ipv4(ip_addr)
+
+            # Interface name from interface struct (struct in_ifaddr)
+            name = ifa_list.ifa_label
             name = utility.array_to_string(name)
             ifa_list = ifa_list.ifa_next
             return (name, ip_addr)
@@ -130,16 +137,17 @@ class Ifconfig(interfaces.plugins.PluginInterface):
         ALL THIS INFO IS SPECIFIC TO NEW KERNELS AND MAY BE DIFFERENT ON OLDER KERNELS.
         """
         try:
-            mac_addr = cls._parse_mac_addr_from_net_dev(context, vmlinux_module_name, net_dev)
-            promisc = str(cls._parse_promisc_mode_from_net_dev(net_dev))            
+            mac_addr = cls._parse_mac_addr_from_net_dev(
+                context, vmlinux_module_name, net_dev)
+            promisc = str(cls._parse_promisc_mode_from_net_dev(net_dev))
             name, ip_addr = cls._parse_ifa_value(net_dev)
         except exceptions.PagedInvalidAddressException:
             pass
-                
+
         if mac_addr:
             return name, ip_addr, mac_addr, promisc
         return "0", "0", "0", "0"
-                               
+
     @classmethod
     def get_requirements(cls) -> List[interfaces.configuration.RequirementInterface]:
         return [
@@ -151,7 +159,7 @@ class Ifconfig(interfaces.plugins.PluginInterface):
     def _generator(self):
         vmlinux_module_name = self.config['kernel']
         vmlinux = self.context.modules[vmlinux_module_name]
-        
+
         # kernel >= 2.6.24
         if vmlinux.has_symbol('net_namespace_list'):
             func = self.get_devices_namespaces
@@ -160,16 +168,19 @@ class Ifconfig(interfaces.plugins.PluginInterface):
             func = self._get_devs_base
         # kernel 2.6.22 and 2.6.23
         elif vmlinux.has_symbol('dev_name_head'):
-            vollog.error('Cannot extract net devices from kernel versions 2.6.22 - 2.6.23')
+            vollog.error(
+                'Cannot extract net devices from kernel versions 2.6.22 - 2.6.23')
             return
         # other unsupported kernels
         else:
-            vollog.error("Unable to determine ifconfig information. Probably because it's an old kernel")
+            vollog.error(
+                "Unable to determine ifconfig information. Probably because it's an old kernel")
             return
-        
+
         # Gather all devices
         for net_dev in func(self.context, self.config['kernel']):
-            name, ip_addr, mac_addr, promisc = self._gather_net_dev_info(self.context, self.config['kernel'], net_dev)
+            name, ip_addr, mac_addr, promisc = self._gather_net_dev_info(
+                self.context, self.config['kernel'], net_dev)
 
             yield (0, (name, ip_addr, mac_addr, promisc))
 

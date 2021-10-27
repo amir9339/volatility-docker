@@ -30,7 +30,7 @@ class Mount(interfaces.plugins.PluginInterface):
             print(fs_name)
             fs_types[fs_name] = fs
             fs_ptr = fs.next
-        
+
         return fs_types
 
     @classmethod
@@ -43,28 +43,28 @@ class Mount(interfaces.plugins.PluginInterface):
         else:
             mnt_type = 'vfsmount'
 
-        mount_hashtable_ptr = vmlinux.object_from_symbol(symbol_name='mount_hashtable')
+        mount_hashtable_ptr = vmlinux.object_from_symbol(
+            symbol_name='mount_hashtable')
         mount_list_ptrs = vmlinux.object(object_type='array',
-                                    offset=mount_hashtable_ptr,
-                                    subtype=vmlinux.get_type('hlist_head'),
-                                    count=8200,
-                                    absolute=True)
-        
+                                         offset=mount_hashtable_ptr,
+                                         subtype=vmlinux.get_type(
+                                             'hlist_head'),
+                                         count=8200,
+                                         absolute=True)
+
         non_empty = list()
         for mount_list_ptr in mount_list_ptrs:
             if mount_list_ptr.first != 0:
                 non_empty.append(mount_list_ptr)
-        
+
         mount_list_ptrs = set(non_empty)
 
-        
-    
     def _generator(self):
         self.list_mounts(self.context, self.config['kernel'])
-        #for mount in self.list_mounts(self.context, self.config['kernel']):
+        # for mount in self.list_mounts(self.context, self.config['kernel']):
         #    pass
 
         yield (0, (0, 0, 0))
-    
+
     def run(self):
         return renderers.TreeGrid([("PLACEHOLDER", int), ("PLACEHOLDER2", int), ("PLACEHOLDER3", int)], self._generator())

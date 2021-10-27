@@ -29,11 +29,13 @@ import volatility.debug as debug
 import volatility.obj as obj
 from volatility.renderers import TreeGrid
 
+
 class linux_ifconfig(linux_common.AbstractLinuxCommand):
     """Gathers active interfaces"""
 
     def _get_devs_base(self):
-        net_device_ptr = obj.Object("Pointer", offset = self.addr_space.profile.get_symbol("dev_base"), vm = self.addr_space)
+        net_device_ptr = obj.Object("Pointer", offset=self.addr_space.profile.get_symbol(
+            "dev_base"), vm=self.addr_space)
         net_device = net_device_ptr.dereference_as("net_device")
 
         for net_dev in linux_common.walk_internal_list("net_device", "next", net_device):
@@ -43,7 +45,8 @@ class linux_ifconfig(linux_common.AbstractLinuxCommand):
 
         # Get network namespace list and define list_head
         nslist_addr = self.addr_space.profile.get_symbol("net_namespace_list")
-        nethead = obj.Object("list_head", offset = nslist_addr, vm = self.addr_space)
+        nethead = obj.Object(
+            "list_head", offset=nslist_addr, vm=self.addr_space)
 
         # walk each network namespace
         # http://www.linuxquestions.org/questions/linux-kernel-70/accessing-ip-address-from-kernel-ver-2-6-31-13-module-815578/
@@ -54,19 +57,21 @@ class linux_ifconfig(linux_common.AbstractLinuxCommand):
                 yield net_dev
 
     def _gather_net_dev_info(self, net_dev):
-        
+
         # mac_addr and promisc(ous mode) are properties of net_dev symbol (At least thats what written here)
         mac_addr = net_dev.mac_addr
-        promisc  = str(net_dev.promisc)
+        promisc = str(net_dev.promisc)
 
-        # ip_ptr is a pointer to an in_device object which holds data about the devices list and IP layer 
-        in_dev = obj.Object("in_device", offset = net_dev.ip_ptr, vm = self.addr_space)
-        
+        # ip_ptr is a pointer to an in_device object which holds data about the devices list and IP layer
+        in_dev = obj.Object(
+            "in_device", offset=net_dev.ip_ptr, vm=self.addr_space)
+
         # Walk each device inside interfaces
         #  list
         for dev in in_dev.devices():
-            ip_addr = dev.ifa_address.cast('IpAddress') # Get interface IP adress
-            name    = dev.ifa_label # Get interface name
+            ip_addr = dev.ifa_address.cast(
+                'IpAddress')  # Get interface IP adress
+            name = dev.ifa_label  # Get interface name
             yield (name, ip_addr, mac_addr, promisc)
 
     def calculate(self):
@@ -74,23 +79,23 @@ class linux_ifconfig(linux_common.AbstractLinuxCommand):
 
         # newer kernels
         if self.addr_space.profile.get_symbol("net_namespace_list"):
-            func = self._get_devs_namespace # Use _get_devs_namespace function
+            func = self._get_devs_namespace  # Use _get_devs_namespace function
 
         elif self.addr_space.profile.get_symbol("dev_base"):
-            func = self._get_devs_base # Use _get_devs_base function
-   
+            func = self._get_devs_base  # Use _get_devs_base function
+
         else:
             debug.error("Unable to determine ifconfig information")
- 
+
         for net_dev in func():
             for (name, ip_addr, mac_addr, promisc) in self._gather_net_dev_info(net_dev):
-                yield (name, ip_addr, mac_addr, promisc) 
-        
+                yield (name, ip_addr, mac_addr, promisc)
+
     def unified_output(self, data):
         return TreeGrid([("Interface", str),
-                       ("IP", str),
-                       ("MAC", str),
-                       ("Promiscuous", str)],
+                         ("IP", str),
+                         ("MAC", str),
+                         ("Promiscuous", str)],
                         self.generator(data))
 
     def generator(self, data):
