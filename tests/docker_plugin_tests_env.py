@@ -165,12 +165,43 @@ class InspectCaps():
                     effective_caps_list = self._caps_hex_to_string(effective_caps)
                     yield pid, effective_caps, effective_caps_list
 
-
-
 docker_ps = Ps(pslist)
 containers_pids = docker_ps.get_containers_pids()
 
-print(docker_ps.get_container_id(container_mounts))
+#print(docker_ps.get_container_id(container_mounts))
 docker_ps.generate_list()
 
 InspectCaps(pslist, containers_pids).generate_containers_caps_list()
+
+containers = {
+    450000: "143413413ed34",
+    560000: "edr413413ed12",
+    670000: "dsajb28698688",
+}
+
+interfaces = [
+    # Interface IP, net_ns
+    ("172.16.0.1", 450000),
+    ("172.16.0.1", 560000),
+    ("172.17.0.1", 670000),
+]
+
+networks_dict = {
+    # "segment": [containers_ids]
+}
+
+for interface in interfaces:
+    interface_ip = interface[0]
+    interface_ns = interface[1]
+    ns_related_container_id = containers[interface_ns]
+
+    segment = interface_ip.split(".")
+    segment = f"{segment[0]}.{segment[1]}" # Get only first two octats of ip addr
+    
+    if segment in networks_dict.keys():
+        networks_dict[segment].append(ns_related_container_id)
+    else:
+        networks_dict[segment] = [ns_related_container_id]
+
+print(networks_dict)
+

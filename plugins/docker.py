@@ -248,7 +248,8 @@ class Ps():
 
                     if extended:
                         yield creation_time, command, container_id, is_priv, pid, effective_uid
-                    yield container_id[:11], command, creation_time, pid
+                    else:
+                        yield container_id[:11], command, creation_time, pid
     
 class InspectCaps():
     """ This class has methods for capabilites extraction and convertion """
@@ -330,7 +331,7 @@ class InspectMounts():
             process_mounts = [mount.Mount.get_mount_info(mnt) for mnt in process_mounts] # Extract mount info for each mount point
             # Iterate each mount in mounts list
             for mnt_id, parent_id, devname, path, absolute_path, fs_type, access, flags in process_mounts:
-                if (not absolute_path.startswith(MOUNTS_ABS_STARTING_PATH_WHITELIST) 
+                if (not absolute_path.startswith(MOUNTS_ABS_STARTING_PATH_WHITELIST)
                     and not absolute_path.endswith(MOUNTS_ABS_ENDING_PATH_WHITELIST)
                     and not path.startswith(MOUNTS_PATH_WHITELIST)):
                     
@@ -339,14 +340,88 @@ class InspectMounts():
 
                     if extended:
                         yield pid, container_id, mnt_id, parent_id, devname, path, absolute_path, fs_type, access, flags
-                    yield pid, container_id[:11], path, absolute_path, fs_type
+                    else:
+                        yield pid, container_id[:11], path, absolute_path, fs_type
 
-class NetworkLs():
-    def __init__(self, context, vmlinux) -> None:
+class InspectNetworks():
+    def __init__(self, context, vmlinux, tasks_list, containers_pids) -> None:
         self.context = context # Volatility req
         self.vmlinux = vmlinux # Volatility req
+        self.tasks_list = tasks_list
+        self.containers_pids = containers_pids
         self.net_devices = ifconfig.Ifconfig.get_devices_namespaces(self.context, self.vmlinux.name)
+    
+    def list_docker_networks(self) -> dict:
+        """
+        This function will list docker networks by walking in interfaces list,
+            extract interfaces that their MAC adress starts with Docker vendor ID,
+            match between containers net ns id and intreface's related net ns and then return a dict
+            of networks (represented by network segment) and the containers connected to it.
+        """
 
+        containers_net_ns_dict = {
+            # net_ns: (container_id, pid)
+        }
+
+        # Return dict
+        networks_dict = {
+            # network_segment: [(container_id, pid)]
+        }
+
+        # Get all containers tasks
+        for task in self.tasks_list:
+            if task.pid in self.containers_pids:
+                # Extract ns info from task to get network ns
+                task_info = pslist.PsList.get_task_info(self.context, self.vmlinux.name, task)
+                net_ns_id = task_info.net_ns
+
+                # Get container-id from Ps class
+                container_id = Ps(self.context, self.vmlinux, self.tasks_list).get_container_id(task.pid)
+                containers_net_ns_dict[net_ns_id] = (container_id, task.pid)
+        
+        # Iterate devices list and get Docker devices
+        for net_dev in self.net_devices:
+            name, ip_addr, mac_addr, _ = ifconfig.Ifconfig._gather_net_dev_info(self.context, self.vmlinux.name, net_dev)
+            
+            # If interface recognized as a docker related interface
+            if mac_addr.startswith(DOCKER_MAC_VENDOR_STARTER):
+                segment = ip_addr.split(".")
+                segment = f"{segment[0]}.{segment[1]}" # Get only first two octats of ip addr
+
+                dev_net_ns = 1 # TODO: FIll after Ofek's commit
+                ns_related_container = containers_net_ns_dict[dev_net_ns]
+
+                # If network segment is already a key in the dict, append container to its list
+                if segment in networks_dict.keys():
+                    networks_dict[segment].append(ns_related_container)
+                else:
+                    networks_dict[segment] = [ns_related_container]
+        return networks_dict
+
+    def generate_networks_list(self, extended=True):
+        """ This function is used to generate networks table and it called by main run function """
+
+        networks_dict = self.list_docker_networks()
+
+        # Yield each network as a table row
+        for network in networks_dict:
+            containers = networks_dict[network]
+
+            # If extended return full container_id else, return short id
+            if extended:
+                containers_ids = [container[0] for container in containers] 
+            else:
+                containers_ids = [container[0][11] for container in containers]
+            containers_ids = ','.join(containers_ids)
+            pids = [container[1] for container in containers]
+            pids = ','.join(pids)
+
+            # If extended yield also pids
+            if extended:
+                yield network, containers_ids, pids
+            else:
+                yield network, containers_ids
+                    
 class Docker(interfaces.plugins.PluginInterface) :
     """ Main class for docker plugin """
 
@@ -359,13 +434,13 @@ class Docker(interfaces.plugins.PluginInterface) :
                                             description='Linux kernel',
                                             architectures=['Intel32', 'Intel64']),
                 requirements.PluginRequirement(name = 'pslist',
-                                                plugin = pslist.PsList, 
+                                                plugin = pslist.PsList,
                                                 version = (2, 0, 0)),
-                requirements.PluginRequirement(name = 'mount', 
-                                                plugin = mount.Mount, 
+                requirements.PluginRequirement(name = 'mount',
+                                                plugin = mount.Mount,
                                                 version = (1, 0, 0)),
-                requirements.PluginRequirement(name = 'ifconfig', 
-                                                plugin = ifconfig.Ifconfig, 
+                requirements.PluginRequirement(name = 'ifconfig',
+                                                plugin = ifconfig.Ifconfig,
                                                 version = (1, 0, 0)),
                 
                 # Plugin options
@@ -390,7 +465,15 @@ class Docker(interfaces.plugins.PluginInterface) :
                                             optional=True,
                                             default=False),
                 requirements.BooleanRequirement(name='inspect-mounts-extended',
-                                            description='Show detailed list of container\s mounts',
+                                            description="Show detailed list of containers mounts",
+                                            optional=True,
+                                            default=False),
+                requirements.BooleanRequirement(name='inspect-networks',
+                                            description="Show detailed list of containers networks",
+                                            optional=True,
+                                            default=False),
+                requirements.BooleanRequirement(name='inspect-networks-extended',
+                                            description="Show detailed list of containers networks",
                                             optional=True,
                                             default=False),
                 ]
@@ -403,7 +486,7 @@ class Docker(interfaces.plugins.PluginInterface) :
 
         # If user chose detector, generate detection table
         if self.config.get("detector"):
-            detection_values = Detector(self.context, vmlinux ,tasks_list).generate_detection_list()
+            detection_values = Detector(self.context, vmlinux, tasks_list).generate_detection_list()
             
             # Actually there is only one row...
             for row in detection_values:
@@ -411,7 +494,7 @@ class Docker(interfaces.plugins.PluginInterface) :
 
         # If user chose ps, generate containers list
         if self.config.get("ps"):
-            for container_row in Ps(self.context, vmlinux ,tasks_list).generate_list(extended=False):
+            for container_row in Ps(self.context, vmlinux, tasks_list).generate_list(extended=False):
                 yield (0, container_row)
 
         # If user chose ps, generate containers list
@@ -421,20 +504,32 @@ class Docker(interfaces.plugins.PluginInterface) :
 
         # If user chose inspect-caps, generate containers list and check their capabilities
         if self.config.get("inspect-caps"):
-            containers_pids = Ps(self.context, vmlinux ,tasks_list).get_containers_pids()
+            containers_pids = Ps(self.context, vmlinux, tasks_list).get_containers_pids()
             for container_row in InspectCaps(self.context, vmlinux, tasks_list, containers_pids).generate_containers_caps_list():
                 yield (0, container_row)
 
         # If user chose inspect-mounts, generate containers list and check their mounts
         if self.config.get("inspect-mounts"):
-            containers_pids = Ps(self.context, vmlinux ,tasks_list).get_containers_pids()
+            containers_pids = Ps(self.context, vmlinux, tasks_list).get_containers_pids()
             for container_row in InspectMounts(self.context, vmlinux, tasks_list, containers_pids).generate_mounts_list(extended=False):
                 yield (0, container_row)
 
         # If user chose inspect-mounts, generate containers list and check their mounts
         if self.config.get("inspect-mounts-extended"):
-            containers_pids = Ps(self.context, vmlinux ,tasks_list).get_containers_pids()
+            containers_pids = Ps(self.context, vmlinux, tasks_list).get_containers_pids()
             for container_row in InspectMounts(self.context, vmlinux, tasks_list, containers_pids).generate_mounts_list(extended=True):
+                yield (0, container_row)
+
+        # If user chose inspect-networks
+        if self.config.get("inspect-networks"):
+            containers_pids = Ps(self.context, vmlinux, tasks_list).get_containers_pids()
+            for container_row in InspectNetworks(self.context, vmlinux, tasks_list, containers_pids).generate_networks_list(extended=False):
+                yield (0, container_row)
+        
+        # If user chose inspect-networks
+        if self.config.get("inspect-networks-extended"):
+            containers_pids = Ps(self.context, vmlinux, tasks_list).get_containers_pids()
+            for container_row in InspectNetworks(self.context, vmlinux, tasks_list, containers_pids).generate_networks_list(extended=True):
                 yield (0, container_row)
 
     def run(self):
@@ -443,9 +538,10 @@ class Docker(interfaces.plugins.PluginInterface) :
 
         if not self.config.get("detector") and not self.config.get("inspect-caps") \
             and not self.config.get("ps") and not self.config.get("ps-extended") \
-            and not self.config.get("inspect-mounts") and not self.config.get("inspect-mounts-extended"):
+            and not self.config.get("inspect-mounts") and not self.config.get("inspect-mounts-extended") \
+            and not self.config.get("inspect-networks") and not self.config.get("inspect-networks-extended"):
             
-            vollog.error('No option selected')
+            vollog.error(f'No option selected')
             raise exceptions.PluginRequirementException('No option selected')
 
         if self.config.get("detector"):
@@ -455,7 +551,7 @@ class Docker(interfaces.plugins.PluginInterface) :
         if self.config.get("ps"):
             columns.extend([('Container ID', str), ('Command', str), ('Creation time (UTC)', str),
                             ('PID', int)])
-        
+
         if self.config.get("ps-extended"):
             columns.extend([('Creation time (UTC)', str), ('Command', str), ('Container ID', str),
                             ('Is privileged', bool), ('PID', int), ('Effective UID', int)])
@@ -469,8 +565,14 @@ class Docker(interfaces.plugins.PluginInterface) :
         
         if self.config.get("inspect-mounts-extended"):
             columns.extend([('PID', int), ('Container ID', str), ('Mount ID', int), 
-                            ('Parent ID', int) ,('Device name', str), ('Path', str), 
+                            ('Parent ID', int), ('Device name', str), ('Path', str), 
                             ('Absolute Path', str), ('FS type', str), ('Access', str),
                             ('Flags', str)])
+
+        if self.config.get("inspect-networks"):
+            columns.extend([('Network segment', str), ('Container ID', str)])
+
+        if self.config.get("inspect-networks-extended"):
+            columns.extend([('Network segment', str), ('Container ID', str), ('Container PID', int)])
 
         return renderers.TreeGrid(columns, self._generator())

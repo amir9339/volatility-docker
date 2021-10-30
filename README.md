@@ -1,4 +1,8 @@
 ## volatility-docker (temporary name)
+<br />
+
+[![DeepSource](https://deepsource.io/gh/amir9339/volatility-docker.svg/?label=active+issues&show_trend=true&token=rispzL5PcBGqIqQ6VWX2FWRL)](https://deepsource.io/gh/amir9339/volatility-docker/?ref=repository-badge)
+<br />
 
 ### ✨ Project Description
 
