@@ -1,7 +1,7 @@
 # This file is Copyright 2019 Volatility Foundation and licensed under the Volatility Software License 1.0
 # which is available at https://www.volatilityfoundation.org/license/vsl-v1.0
 #
-from typing import List, Tuple, Iterator
+from typing import List, Tuple, Iterator, Union
 
 from volatility3 import framework
 from volatility3.framework import exceptions, constants, interfaces, objects
@@ -103,6 +103,48 @@ class LinuxUtilities(interfaces.configuration.VersionableInterface):
             ret_val = '/' + ret_val
 
         return ret_val
+
+    @classmethod
+    def prepend_path(cls,
+                     dentry: extensions.dentry,
+                     mnt: Union[extensions.mount, extensions.vfsmount],
+                     root: interfaces.objects.ObjectInterface) -> str:
+        """Calculate the path of a dentry. Based on prepend_path from the Linux kernel.
+        See https://elixir.bootlin.com/linux/latest/C/ident/prepend_path
+        """
+        path_reversed = []
+
+        if not mnt.has_member('mnt_parent'):
+            mnt = mnt._get_real_mnt()
+
+        vfsmnt = mnt
+        if mnt.has_member('mnt'):
+            vfsmnt = mnt.mnt
+
+        while dentry.vol.offset != root.dentry or vfsmnt.vol.offset != root.mnt:
+            parent = dentry.d_parent.dereference()
+
+            if dentry.vol.offset == mnt.get_mnt_root():
+                m = mnt.get_mnt_parent().dereference()
+                if mnt.vol.offset != m.vol.offset:
+                    dentry = mnt.get_mnt_mountpoint().dereference()
+                    mnt = m
+                    vfsmnt = mnt
+                    if mnt.has_member('mnt'):
+                        vfsmnt = mnt.mnt
+                    continue
+
+                return None
+            
+            if dentry.vol.offset == parent.vol.offset:
+                return None
+            
+            dname = dentry.d_name.name_as_str()
+            path_reversed.append(dname.strip('/'))
+            dentry = parent
+        
+        path = '/' + '/'.join(reversed(path_reversed))
+        return path
 
     # method used by 'older' kernels
     # TODO: lookup when dentry_operations->d_name was merged into the mainline kernel for exact version

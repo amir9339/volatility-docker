@@ -72,9 +72,6 @@ class ListFiles(interfaces.plugins.PluginInterface):
                                          description='Filter by mount ID',
                                          element_type=int,
                                          optional=True),
-            requirements.BooleanRequirement(name='all',
-                                            description='List files from all mounts (cannot be used with --pid)',
-                                            optional=True),
             requirements.StringRequirement(name='path',
                                            description='List files under a specified path',
                                            optional=True),
@@ -212,21 +209,19 @@ class ListFiles(interfaces.plugins.PluginInterface):
 
     @classmethod
     def get_file_info(cls,
+                      task: symbols.linux.extensions.task_struct,
                       mount: symbols.linux.extensions.mount,
-                      dentry: symbols.linux.extensions.dentry) -> Union[None, Tuple[int, int, int, str, int, int, int, int, int, int, str]]:
-        """
-        Parse a mount and dentry pair and return the following tuple:
+                      dentry: symbols.linux.extensions.dentry
+                      ) -> Union[None, Tuple[int, int, int, str, int, int, int, int, int, int, str]]:
+        """Parse a dentry and return the following tuple:
         mount_id, inode_id, inode_address, mode, uid, gid, size, created, modified, accessed, file_path
+
+        A mount and task are required for path calculation.
         """
         # get file path
-        sb = mount.get_mnt_sb()
-        s_root = sb.s_root.dereference()
-        mnt_parent = mount.mnt_parent.dereference()
-        try:
-            path = symbols.linux.LinuxUtilities._do_get_path(s_root, mnt_parent, dentry, mount)
-        # bad dentry
-        except exceptions.PagedInvalidAddressException:
-            return None
+        path = symbols.linux.LinuxUtilities.prepend_path(dentry, mount, task.fs.root)
+        if path is None:
+            path = ''
 
         # get mount id
         mnt_id = mount.mnt_id
@@ -323,10 +318,10 @@ class ListFiles(interfaces.plugins.PluginInterface):
             non_filtered_mounts = mount_plugin.Mount.get_mounts(context, vmlinux_module_name, pid_filter)
         
         # filter out mounts
-        mounts = [mount for mount in non_filtered_mounts if not mnt_filter(mount)]
+        mounts = [(task, mount) for task, mount in non_filtered_mounts if not mnt_filter(mount)]
         num_mounts = len(mounts)
 
-        for i, mount in enumerate(mounts):
+        for i, (task, mount) in enumerate(mounts):
             vollog.info(f'[{i}/{num_mounts}]  listing files for mount ID {mount.mnt_id}')
             
             # set of dentry addresses for this mount
@@ -341,7 +336,7 @@ class ListFiles(interfaces.plugins.PluginInterface):
             # add dentries for this mount to global list
             for dentry_ptr in mount_dentries:
                 dentry = vmlinux.object(object_type='dentry', offset=dentry_ptr, absolute=True)
-                dentries.append((mount, dentry))
+                dentries.append((task, mount, dentry))
         
         return dentries
     
@@ -357,11 +352,12 @@ class ListFiles(interfaces.plugins.PluginInterface):
         else:
             pid_filter = None
         
-        # get 'all' parameter
-        all = self.config.get('all', False)
         # if a mount list was specified but PID list wasn't, extract all mounts to search for the requested mounts
         if self.config.get('mount') and not pids:
+            # TODO: build a list of all PIDs using pslist, extract mounts using this list as the filter, and use the requested mounts (which come with a task struct)
             all = True
+        else:
+            all = False
 
         files = dict()
 
@@ -374,12 +370,12 @@ class ListFiles(interfaces.plugins.PluginInterface):
         num_dentries = len(dentries)
 
         # iterate through dentries, extract file info and apply path and UID filters
-        for i, (mount, dentry) in enumerate(dentries):
+        for i, (task, mount, dentry) in enumerate(dentries):
             # print info message every 1000 files
             if i % 1000 == 0:
                 vollog.info(f'[{i}/{num_dentries}]  extracting file info and filtering paths')
 
-            info = self.get_file_info(mount, dentry)
+            info = self.get_file_info(task, mount, dentry)
             # info could not be extracted
             if info is None:
                 continue
