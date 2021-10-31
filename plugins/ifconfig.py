@@ -22,7 +22,8 @@ class Ifconfig(interfaces.plugins.PluginInterface):
     @classmethod
     def get_devices_namespaces(cls,         
                                context: interfaces.context.ContextInterface,
-                               vmlinux_module_name: str) -> Iterable[interfaces.objects.ObjectInterface]:
+                               vmlinux_module_name: str,
+                               return_ns_num=False) -> Iterable[interfaces.objects.ObjectInterface]:
         """Walk the list of net namespaces and extract all net devices from them (kernel >= 2.6.24)."""
         vmlinux = context.modules[vmlinux_module_name]
         symbol_table = vmlinux.symbol_table_name
@@ -31,9 +32,15 @@ class Ifconfig(interfaces.plugins.PluginInterface):
         
         # Enumerate each network namespace (struct net) in memory and pass the first one 
         for net_ns in net_namespace_list.to_list(symbol_table + constants.BANG + 'net', 'list', sentinel=True):
+            net_ns_num = net_ns.get_inum()
+
             # for each net namespace, walk the list of net devices
             for net_dev in net_ns.dev_base_head.to_list(symbol_table + constants.BANG + 'net_device', 'dev_list', sentinel=True):
-                yield net_dev
+                
+                if return_ns_num:
+                    yield net_dev, net_ns_num
+                else:
+                    yield net_dev
     
     @classmethod
     def _get_devs_base(cls,
@@ -103,6 +110,7 @@ class Ifconfig(interfaces.plugins.PluginInterface):
         """Extract various information from a net device.
         Return the following tuple: name, ip addr, mac addr, is promiscuous.
         """
+
         """FIX ATTEMPT FINDINGS:
         The net_device struct has a few pointers to protocol-sepcific structs.
         ip_ptr points to a struct containing IPv4 specific info, and contains a list of in_ifaddr structs that contain info on an IPv4 address.
@@ -169,8 +177,7 @@ class Ifconfig(interfaces.plugins.PluginInterface):
         
         # Gather all devices
         for net_dev in func(self.context, self.config['kernel']):
-            name, ip_addr, mac_addr, promisc = self._gather_net_dev_info(self.context, self.config['kernel'], net_dev)
-
+ 
             yield (0, (name, ip_addr, mac_addr, promisc))
 
     def run(self):
