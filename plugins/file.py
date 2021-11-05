@@ -296,26 +296,19 @@ class ListFiles(interfaces.plugins.PluginInterface):
                      context: interfaces.context.ContextInterface,
                      vmlinux_module_name: str,
                      pid_filter: Callable[[Any], bool] = None,
-                     mnt_filter: Callable[[Any], bool] = lambda _: False,
-                     all:bool = False) -> Tuple[symbols.linux.extensions.mount, List[symbols.linux.extensions.dentry]]:
+                     mnt_filter: Callable[[Any], bool] = lambda _: False
+                     ) -> Tuple[symbols.linux.extensions.mount, List[symbols.linux.extensions.dentry]]:
         """Get a list of all cached dentries in the filesystem that match the given filters."""
-        # make sure pid_filter and all aren't used together
-        if all and pid_filter is not None:
-            raise ValueError('all option cannot be used with a PID filter')
-
         vmlinux = context.modules[vmlinux_module_name]
 
         # list of dentries
         dentries = []
 
-        # get a list of mounts to use
-        if not all and pid_filter is None:
+        # no PID filter, use PID 1
+        if pid_filter is None:
             pid_filter = pslist.PsList.create_pid_filter([1])
 
-        if all:
-            non_filtered_mounts = mount_plugin.Mount.get_all_mounts(context, vmlinux_module_name)
-        else:
-            non_filtered_mounts = mount_plugin.Mount.get_mounts(context, vmlinux_module_name, pid_filter)
+        non_filtered_mounts = mount_plugin.Mount.get_mounts(context, vmlinux_module_name, pid_filter)
         
         # filter out mounts
         mounts = [(task, mount) for task, mount in non_filtered_mounts if not mnt_filter(mount)]
@@ -345,19 +338,21 @@ class ListFiles(interfaces.plugins.PluginInterface):
         path_filter = self.create_path_filter(self.config.get('path', None))
         uid_filter = self.create_uid_filter(self.config.get('uid', None))
 
-        # create PID filter
-        pids = self.config.get('pid', None)
+        # get requested PIDs
+        pids = self.config.get('pid')
+        
+        # if a mount list was specified but PID list wasn't, extract mounts from all PIDs
+        if self.config.get('mount') and not pids:
+            # get PIDs of all tasks
+            pids = []
+            for task in pslist.PsList.list_tasks(self.context, self.config['kernel']):
+                pids.append(task.pid)
+        
+        # build PID filter
         if pids:
             pid_filter = pslist.PsList.create_pid_filter(pids)
         else:
             pid_filter = None
-        
-        # if a mount list was specified but PID list wasn't, extract all mounts to search for the requested mounts
-        if self.config.get('mount') and not pids:
-            # TODO: build a list of all PIDs using pslist, extract mounts using this list as the filter, and use the requested mounts (which come with a task struct)
-            all = True
-        else:
-            all = False
 
         files = dict()
 
@@ -365,8 +360,7 @@ class ListFiles(interfaces.plugins.PluginInterface):
         dentries = self.get_dentries(context=self.context,
                                      vmlinux_module_name=self.config['kernel'],
                                      pid_filter=pid_filter,
-                                     mnt_filter=self.create_mount_filter(self.config.get('mount', None)),
-                                     all=all)
+                                     mnt_filter=self.create_mount_filter(self.config.get('mount', None)))
         num_dentries = len(dentries)
 
         # iterate through dentries, extract file info and apply path and UID filters
@@ -396,8 +390,4 @@ class ListFiles(interfaces.plugins.PluginInterface):
             yield (0, (mnt_id, inode_id, format_hints.Hex(inode_addr), mode, uid, gid, size, created, modified, accessed, file_path))
     
     def run(self):
-        # make sure 'all' and 'pid' aren't used together
-        if self.config.get('all') and self.config.get('pid'):
-            raise exceptions.PluginRequirementException('"pid" and "all" cannot be used together')
-
         return renderers.TreeGrid([('Mount ID', int), ('Inode ID', int), ('Inode Address', format_hints.Hex), ('Mode', str), ('UID', int), ('GID', int), ('Size', int), ('Created', int), ('Modified', int), ('Accessed', int), ('File Path', str)], self._generator())

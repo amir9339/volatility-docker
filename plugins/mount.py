@@ -7,6 +7,7 @@ from volatility3.framework.configuration import requirements
 from volatility3.framework import exceptions
 from volatility3.framework.objects import utility
 from volatility3.plugins.linux import pslist
+from volatility3.framework import exceptions
 
 
 MAX_STRING = 256
@@ -168,6 +169,9 @@ class Mount(interfaces.plugins.PluginInterface):
             except AttributeError as ex:
                 vollog.error(f'No mount namespace information available: {str(ex)}')
                 return
+            except exceptions.PagedInvalidAddressException:
+                vollog.error(f'Cannot extract mounts from pid {task.pid}')
+                continue
             
             # get identifier for mnt_ns
             try:
