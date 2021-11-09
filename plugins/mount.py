@@ -104,15 +104,8 @@ class Mount(interfaces.plugins.PluginInterface):
         
         # in kernel >= 3.13.9 mount_hashtable size is determined at boot time
         else:
-            try:
-                # mhash_entries is initialized from boot parameters during setup
-                # and is used to allocate memory for mount_hashtable
-                mount_hashtable_entries = vmlinux.object_from_symbol('mhash_entries')
-            # sometimes mhash_entries isn't available (it is marked in the linux source
-            # as __init_data which means it may be deallocated at some point)
-            except exceptions.PagedInvalidAddressException:
-                # m_hash_mask is the binary mask of the number of entries
-                mount_hashtable_entries = vmlinux.object_from_symbol('m_hash_mask') + 1
+            # m_hash_mask is the binary mask of the number of entries
+            mount_hashtable_entries = vmlinux.object_from_symbol('m_hash_mask') + 1
         
         vollog.info(f'mount_hashtable entries: {mount_hashtable_entries}')
 
@@ -214,9 +207,17 @@ class Mount(interfaces.plugins.PluginInterface):
         devname = utility.pointer_to_string(mount.mnt_devname, MAX_STRING)
 
         # get path
-        path = symbols.linux.LinuxUtilities.prepend_path(mount.get_mnt_root().dereference(), mount, task.fs.root)
-        if path is None:
-            path = ''
+        if task is not None:
+            path = symbols.linux.LinuxUtilities.prepend_path(mount.get_mnt_root().dereference(), mount, task.fs.root)
+            if path is None:
+                path = ''
+        # no task supplied - use namespace agnostic method
+        else:
+            sb = mount.get_mnt_sb().dereference()
+            s_root = sb.s_root.dereference()
+            mnt_parent = mount.mnt_parent.dereference()
+            mnt_root = mount.get_mnt_root().dereference()
+            path = symbols.linux.LinuxUtilities._do_get_path(s_root, mnt_parent, mnt_root, mount)
 
         # get absolute path
         init_task = vmlinux.object_from_symbol(symbol_name="init_task")
