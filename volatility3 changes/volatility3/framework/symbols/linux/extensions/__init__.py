@@ -208,22 +208,27 @@ class task_struct(generic.GenericIntelProcess):
 
     def _get_upid(self):
         if self.has_member('thread_pid'):
-            thread_pid = self.thread_pid.dereference()
+            pid_struct = self.thread_pid.dereference()
+        elif self.has_member('pids'):
+            pid_struct = self.pids[0].pid.dereference()
         else:
-            raise AttributeError('Unable to find task_struct -> thread_pid')
+            raise AttributeError('Unable to find task_struct -> upid')
 
         try:
-            return thread_pid.numbers[thread_pid.level]
+            return pid_struct.numbers[pid_struct.level]
         # The numbers array is defined as a single element in size, but in practice it may have an arbitrary size.
         # Beacuase C doesn't care about out-of-bounds access, there's no problem accessing indexes other than 0
         # during run time, but python won't let us so we need to redefine this array as the appropriate size.
         except IndexError:
-            thread_pid.numbers.count = thread_pid.level + 1
-            return thread_pid.numbers[thread_pid.level]
+            pid_struct.numbers.count = pid_struct.level + 1
+            return pid_struct.numbers[pid_struct.level]
     
     def get_pid_ns(self):
         """Returns the pid_namespace struct of the current task."""
-        return self._get_upid().ns.dereference()
+        try:
+            return self._get_upid().ns.dereference()
+        except AttributeError:
+            return self.nsproxy.pid_ns_for_children.dereference()
     
     def get_namespace_pid(self):
         """Returns the pid of the task as it is seen from within its pid namespace."""
