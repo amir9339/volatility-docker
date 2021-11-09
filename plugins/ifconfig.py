@@ -26,31 +26,33 @@ class Ifconfig(interfaces.plugins.PluginInterface):
         ]
 
     @classmethod
-    def _get_devs_namespaces(cls,         
+    def _get_devs_namespaces(cls,
                              context: interfaces.context.ContextInterface,
                              vmlinux_module_name: str) -> Iterable[Tuple[int, symbols.linux.extensions.net_device]]:
         """Walk the list of net namespaces and extract all net devices from them (kernel >= 2.6.24)."""
         vmlinux = context.modules[vmlinux_module_name]
         symbol_table = vmlinux.symbol_table_name
 
-        net_namespace_list = vmlinux.object_from_symbol(symbol_name='net_namespace_list')
-        
-        # enumerate each network namespace (struct net) in memory and pass the first one 
+        net_namespace_list = vmlinux.object_from_symbol(
+            symbol_name='net_namespace_list')
+
+        # enumerate each network namespace (struct net) in memory and pass the first one
         for net_ns in net_namespace_list.to_list(symbol_table + constants.BANG + 'net', 'list', sentinel=True):
             ns_num = net_ns.get_inum()
 
             # for each net namespace, walk the list of net devices
             for net_dev in net_ns.dev_base_head.to_list(symbol_table + constants.BANG + 'net_device', 'dev_list', sentinel=True):
                 yield ns_num, net_dev
-    
+
     @classmethod
     def _get_devs_base(cls,
-        context: interfaces.context.ContextInterface,
-        vmlinux_module_name: str) -> Iterable[Tuple[int, symbols.linux.extensions.net_device]]:
+                       context: interfaces.context.ContextInterface,
+                       vmlinux_module_name: str) -> Iterable[Tuple[int, symbols.linux.extensions.net_device]]:
         """Walk the list of net devices headed by dev_base (kernel < 2.6.22)."""
         vmlinux = context.modules[vmlinux_module_name]
 
-        first_net_device = vmlinux.object_from_symbol(symbol_name='dev_base').dereference()
+        first_net_device = vmlinux.object_from_symbol(
+            symbol_name='dev_base').dereference()
 
         for net_dev in symbols.linux.LinuxUtilities.walk_internal_list(vmlinux, 'net_device', 'next', first_net_device):
             # no network namespace, so yield -1 instead of namespace number
@@ -71,13 +73,15 @@ class Ifconfig(interfaces.plugins.PluginInterface):
             func = cls._get_devs_base
         # kernel 2.6.22 and 2.6.23
         elif vmlinux.has_symbol('dev_name_head'):
-            vollog.error('Cannot extract net devices from kernel versions 2.6.22 - 2.6.23')
+            vollog.error(
+                'Cannot extract net devices from kernel versions 2.6.22 - 2.6.23')
             return
         # other unsupported kernels
         else:
-            vollog.error("Unable to determine ifconfig information. Probably because it's an old kernel")
+            vollog.error(
+                "Unable to determine ifconfig information. Probably because it's an old kernel")
             return
-        
+
         # yield net devices
         for net_ns, dev in func(context, vmlinux_module_name):
             yield net_ns, dev
@@ -98,7 +102,8 @@ class Ifconfig(interfaces.plugins.PluginInterface):
         # get MAC address
         mac_addr = ''
         for netdev_hw_addr in net_dev.dev_addrs.list.to_list(symbol_table + constants.BANG + 'netdev_hw_addr', 'list', sentinel=True):
-            mac_addr = ':'.join(['{0:02x}'.format(x) for x in netdev_hw_addr.addr][:6])
+            mac_addr = ':'.join(['{0:02x}'.format(x)
+                                for x in netdev_hw_addr.addr][:6])
             # use only first address
             break
 
@@ -110,14 +115,15 @@ class Ifconfig(interfaces.plugins.PluginInterface):
         except exceptions.PagedInvalidAddressException:
             ipv4_addr = ''
             ipv4_prefixlen = 0
-        
+
         # get IPv6 info
         ipv6_addr = ''
         ipv6_prefixlen = 0
         try:
             inet6_dev = net_dev.ip6_ptr.dereference()
             for inet6_ifaddr in inet6_dev.addr_list.to_list(symbol_table + constants.BANG + 'inet6_ifaddr', 'if_list', sentinel=True):
-                ipv6_addr = conversion.convert_ipv6(inet6_ifaddr.addr.in6_u.u6_addr32)
+                ipv6_addr = conversion.convert_ipv6(
+                    inet6_ifaddr.addr.in6_u.u6_addr32)
                 ipv6_prefixlen = inet6_ifaddr.prefix_len
                 # use only first address
                 break
@@ -129,13 +135,14 @@ class Ifconfig(interfaces.plugins.PluginInterface):
 
         return name, mac_addr, ipv4_addr, ipv4_prefixlen, ipv6_addr, ipv6_prefixlen, promisc
 
-    def _generator(self):        
+    def _generator(self):
         # get all network devices
         for _, net_dev in self.get_net_devs(self.context, self.config['kernel']):
             # extract information from each device
-            info = self.get_net_dev_info(self.context, self.config['kernel'], net_dev)
+            info = self.get_net_dev_info(
+                self.context, self.config['kernel'], net_dev)
             name, mac_addr, ipv4_addr, ipv4_prefixlen, ipv6_addr, ipv6_prefixlen, promisc = info
-            
+
             # convert to CIDR notation
             if ipv4_addr:
                 ipv4 = ipv4_addr + '/' + str(ipv4_prefixlen)
