@@ -38,6 +38,7 @@ class LinuxKernelIntermedSymbols(intermed.IntermediateSymbolTable):
         self.set_type_class('net', extensions.net)
         self.set_type_class('user_namespace', extensions.user_namespace)
         self.set_type_class('kernel_cap_struct', extensions.kernel_cap_struct)
+        self.set_type_class('net_device', extensions.net_device)
 
         if 'module' in self.types:
             self.set_type_class('module', extensions.module)

@@ -740,3 +740,7 @@ class kernel_cap_struct(objects.StructType):
         except TypeError:
             val = self.cap
         return val
+
+
+class net_device(objects.StructType):
+    pass
