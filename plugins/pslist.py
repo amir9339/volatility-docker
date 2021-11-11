@@ -186,19 +186,31 @@ class PsList(interfaces.plugins.PluginInterface):
         if credinfo:
             cred = task.cred.dereference()
             try:
-                info.real_uid = cred.uid.val
+                if cred.uid.has_member('val'):
+                    info.real_uid = cred.uid.val
+                else:
+                    info.real_uid = cred.uid
             except exceptions.PagedInvalidAddressException:
                 pass
             try:
-                info.real_gid = cred.gid.val
+                if cred.gid.has_member('val'):
+                    info.real_gid = cred.gid.val
+                else:
+                    info.real_gid = cred.gid
             except exceptions.PagedInvalidAddressException:
                 pass
             try:
-                info.eff_uid = cred.euid.val
+                if cred.euid.has_member('val'):
+                    info.eff_uid = cred.euid.val
+                else:
+                    info.eff_uid = cred.euid
             except exceptions.PagedInvalidAddressException:
                 pass
             try:
-                info.eff_gid = cred.egid.val
+                if cred.egid.has_member('val'):
+                    info.eff_gid = cred.egid.val
+                else:
+                    info.eff_gid = cred.egid
             except exceptions.PagedInvalidAddressException:
                 pass
             try:

@@ -250,8 +250,14 @@ class ListFiles(interfaces.plugins.PluginInterface):
             mode = cls._mode_to_str(inode.i_mode)
 
             # get uid and gid
-            uid = inode.i_uid.val
-            gid = inode.i_gid.val
+            if inode.i_uid.has_member('val'):
+                uid = inode.i_uid.val
+            else:
+                uid = inode.i_uid
+            if inode.i_gid.has_member('val'):
+                gid = inode.i_gid.val
+            else:
+                gid = inode.i_gid
 
             # get size
             size = inode.i_size
@@ -287,7 +293,8 @@ class ListFiles(interfaces.plugins.PluginInterface):
             return
         if is_dir:
             # walk subdirs linked list
-            for subdir_dentry in dentry.d_subdirs.to_list(symbol_table + constants.BANG + 'dentry', 'd_child'):
+            field_name = 'd_child' if dentry.has_member('d_child') else 'd_u'
+            for subdir_dentry in dentry.d_subdirs.to_list(symbol_table + constants.BANG + 'dentry', field_name):
                 # walk subdir dentry
                 cls._walk_dentry(context, vmlinux_module_name, dentry_set, subdir_dentry)
     

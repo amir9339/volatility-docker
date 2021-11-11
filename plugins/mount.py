@@ -82,6 +82,7 @@ class Mount(interfaces.plugins.PluginInterface):
                        vmlinux_module_name: str) -> Iterable[Tuple[None, symbols.linux.extensions.mount]]:
         """Extract a list of all mounts using the mount_hashtable."""
         vmlinux = context.modules[vmlinux_module_name]
+        symbol_table = vmlinux.symbol_table_name
         layer = context.layers[vmlinux.layer_name]
 
         # kernel >= 3.13.9 uses an hlist_head instead of a list_head
@@ -130,8 +131,12 @@ class Mount(interfaces.plugins.PluginInterface):
                 first_mount = hash.first.dereference().cast(mnt_type)
 
             # walk linked list of mounts
-            for mount in first_mount.mnt_hash:
-                # yield None with the mount for consistenct with get_mounts
+            for mount in first_mount.mnt_hash.to_list(symbol_table + constants.BANG + mnt_type, 'mnt_hash', sentinel=False):
+                # make sure the mount is valid
+                if mount.mnt_id < 0:
+                    continue
+
+                # yield None with the mount for consistent with get_mounts
                 yield None, mount
 
     @classmethod
@@ -278,7 +283,7 @@ class Mount(interfaces.plugins.PluginInterface):
         
         # sort mounts by ID
         if self.config.get('sort', False):
-            mounts_by_id = {mount.mnt_id: mount for mount in mounts}
+            mounts_by_id = {mount.mnt_id: (task, mount) for task, mount in mounts}
             ids = list(mounts_by_id.keys())
             ids.sort()
             mounts = [mounts_by_id[id] for id in ids]

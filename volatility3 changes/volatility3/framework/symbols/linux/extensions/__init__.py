@@ -245,13 +245,15 @@ class task_struct(generic.GenericIntelProcess):
     
     def get_start_time(self, boot_time: int) -> int:
         """Returns the start time of the task as a Unix timestamp."""
+        nsecs_per_sec = 1000000000
+
         if self.has_member('real_start_time'):
             start_time = self.real_start_time
+            if not start_time.has_member('tv_sec'):
+                start_time = VolTimespec(start_time / nsecs_per_sec, start_time % nsecs_per_sec)
         else:
-            start_time = self.start_time
+            start_time = VolTimespec(self.start_boottime / nsecs_per_sec, self.start_boottime % nsecs_per_sec)
 
-        nsecs_per_sec = 1000000000
-        start_time = VolTimespec(start_time / nsecs_per_sec, 0)
         start_secs = start_time.tv_sec + (start_time.tv_nsec / nsecs_per_sec / 100)
 
         if boot_time != -1:
