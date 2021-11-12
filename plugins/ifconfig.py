@@ -37,7 +37,10 @@ class Ifconfig(interfaces.plugins.PluginInterface):
         
         # enumerate each network namespace (struct net) in memory and pass the first one 
         for net_ns in net_namespace_list.to_list(symbol_table + constants.BANG + 'net', 'list', sentinel=True):
-            ns_num = net_ns.get_inum()
+            try:
+                ns_num = net_ns.get_inum()
+            except AttributeError:
+                ns_num = -1
 
             # for each net namespace, walk the list of net devices
             for net_dev in net_ns.dev_base_head.to_list(symbol_table + constants.BANG + 'net_device', 'dev_list', sentinel=True):

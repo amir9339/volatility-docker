@@ -653,6 +653,12 @@ class vfsmount(objects.StructType):
 
     def get_mnt_root(self):
         return self.mnt_root
+    
+    def get_mnt_sb(self):
+        return self.mnt_sb
+    
+    def get_mnt_flags(self):
+        return self.mnt_flags
 
 
 class kobject(objects.StructType):

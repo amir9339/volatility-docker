@@ -135,6 +135,13 @@ class Mount(interfaces.plugins.PluginInterface):
                 # make sure the mount is valid
                 if mount.mnt_id < 0:
                     continue
+                try:
+                    devname = utility.pointer_to_string(mount.mnt_devname, MAX_STRING)
+                except exceptions.PagedInvalidAddressException:
+                    continue
+                else:
+                    if not devname or not devname.isprintable():
+                        continue
 
                 # yield None with the mount for consistent with get_mounts
                 yield None, mount
@@ -206,23 +213,37 @@ class Mount(interfaces.plugins.PluginInterface):
         mnt_id = mount.mnt_id
 
         # get parent id
-        parent_id = mount.get_mnt_parent().mnt_id
+        try:
+            parent_id = mount.get_mnt_parent().mnt_id
+        except exceptions.PagedInvalidAddressException:
+            parent_id = -1
 
         # get devname
-        devname = utility.pointer_to_string(mount.mnt_devname, MAX_STRING)
+        try:
+            devname = utility.pointer_to_string(mount.mnt_devname, MAX_STRING)
+        except exceptions.PagedInvalidAddressException:
+            devname = ''
 
         # get path
         if task is not None:
-            path = symbols.linux.LinuxUtilities.prepend_path(mount.get_mnt_root().dereference(), mount, task.fs.root)
-            if path is None:
+            try:
+                path = symbols.linux.LinuxUtilities.prepend_path(mount.get_mnt_root().dereference(), mount, task.fs.root)
+            except exceptions.PagedInvalidAddressException:
                 path = ''
+            else:
+                if path is None:
+                    path = ''
+
         # no task supplied - use namespace agnostic method
         else:
             sb = mount.get_mnt_sb().dereference()
             s_root = sb.s_root.dereference()
             mnt_parent = mount.mnt_parent.dereference()
             mnt_root = mount.get_mnt_root().dereference()
-            path = symbols.linux.LinuxUtilities._do_get_path(s_root, mnt_parent, mnt_root, mount)
+            try:
+                path = symbols.linux.LinuxUtilities._do_get_path(s_root, mnt_parent, mnt_root, mount)
+            except exceptions.PagedInvalidAddressException:
+                path = ''
 
         # get absolute path
         init_task = vmlinux.object_from_symbol(symbol_name="init_task")
@@ -238,13 +259,20 @@ class Mount(interfaces.plugins.PluginInterface):
         dentry = mount.get_mnt_root().dereference()
 
         # the absolute path is calculated relative to the fs root of the init task
-        absolute_path = symbols.linux.LinuxUtilities.prepend_path(dentry, root_mnt, init_task.fs.root)
-        # if absolute path could not be calculated, the mount is independent from the fs root
-        if absolute_path is None:
-            absolute_path = '-'
+        try:
+            absolute_path = symbols.linux.LinuxUtilities.prepend_path(dentry, root_mnt, init_task.fs.root)
+        except exceptions.PagedInvalidAddressException:
+            absolute_path = ''
+        else:
+            # if absolute path could not be calculated, the mount is independent from the fs root
+            if absolute_path is None:
+                absolute_path = '-'
 
-        # get fs type
-        fs_type = utility.pointer_to_string(mount.get_mnt_sb().dereference().s_type.dereference().name, MAX_STRING)
+        # get fs typee
+        try:
+            fs_type = utility.pointer_to_string(mount.get_mnt_sb().dereference().s_type.dereference().name, MAX_STRING)
+        except exceptions.PagedInvalidAddressException:
+            fs_type = ''
 
         # get access
         mnt_flags = mount.get_mnt_flags()

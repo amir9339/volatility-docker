@@ -219,9 +219,13 @@ class ListFiles(interfaces.plugins.PluginInterface):
         A mount and task are required for path calculation.
         """
         # get file path
-        path = symbols.linux.LinuxUtilities.prepend_path(dentry, mount, task.fs.root)
-        if path is None:
+        try:
+            path = symbols.linux.LinuxUtilities.prepend_path(dentry, mount, task.fs.root)
+        except exceptions.PagedInvalidAddressException:
             path = ''
+        else:
+            if path is None:
+                path = ''
 
         # get mount id
         mnt_id = mount.mnt_id
