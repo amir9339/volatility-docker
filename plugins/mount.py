@@ -14,35 +14,36 @@ MAX_STRING = 256
 
 # mount flags - see https://elixir.bootlin.com/linux/v5.15-rc5/source/include/linux/mount.h#L26
 MNT_FLAGS = {
-    0x1        : "MNT_NOSUID",
-    0x2        : "MNT_NODEV",
-    0x4        : "MNT_NOEXEC",
-    0x8        : "MNT_NOATIME",
-    0x10       : "MNT_NODIRATIME",
-    0x20       : "MNT_RELATIME",
-    0x40       : "MNT_READONLY",
-    0x80       : "MNT_NOSYMFOLLOW",
-    0x100      : "MNT_SHRINKABLE",
-    0x200      : "MNT_WRITE_HOLD",
-    0x1000     : "MNT_SHARED",
-    0x2000     : "MNT_UNBINDABLE",
-    0x4000     : "MNT_INTERNAL",
-    0x40000    : "MNT_LOCK_ATIME",
-    0x80000    : "MNT_LOCK_NOEXEC",
-    0x100000   : "MNT_LOCK_NOSUID",
-    0x200000   : "MNT_LOCK_NODEV",
-    0x400000   : "MNT_LOCK_READONLY",
-    0x800000   : "MNT_LOCKED",
-    0x1000000  : "MNT_DOOMED",
-    0x2000000  : "MNT_SYNC_UMOUNT",
-    0x4000000  : "MNT_MARKED",
-    0x8000000  : "MNT_UMOUNT",
-    0x10000000 : "MNT_CURSOR"
+    0x1: "MNT_NOSUID",
+    0x2: "MNT_NODEV",
+    0x4: "MNT_NOEXEC",
+    0x8: "MNT_NOATIME",
+    0x10: "MNT_NODIRATIME",
+    0x20: "MNT_RELATIME",
+    0x40: "MNT_READONLY",
+    0x80: "MNT_NOSYMFOLLOW",
+    0x100: "MNT_SHRINKABLE",
+    0x200: "MNT_WRITE_HOLD",
+    0x1000: "MNT_SHARED",
+    0x2000: "MNT_UNBINDABLE",
+    0x4000: "MNT_INTERNAL",
+    0x40000: "MNT_LOCK_ATIME",
+    0x80000: "MNT_LOCK_NOEXEC",
+    0x100000: "MNT_LOCK_NOSUID",
+    0x200000: "MNT_LOCK_NODEV",
+    0x400000: "MNT_LOCK_READONLY",
+    0x800000: "MNT_LOCKED",
+    0x1000000: "MNT_DOOMED",
+    0x2000000: "MNT_SYNC_UMOUNT",
+    0x4000000: "MNT_MARKED",
+    0x8000000: "MNT_UMOUNT",
+    0x10000000: "MNT_CURSOR"
 }
 
 # for determining access
-MNT_READONLY = 0x40 # https://elixir.bootlin.com/linux/v5.15-rc4/source/include/linux/mount.h#L32
-SB_RDONLY    = 0x1  # https://elixir.bootlin.com/linux/v5.15-rc4/source/include/linux/fs.h#L1394
+# https://elixir.bootlin.com/linux/v5.15-rc4/source/include/linux/mount.h#L32
+MNT_READONLY = 0x40
+SB_RDONLY = 0x1  # https://elixir.bootlin.com/linux/v5.15-rc4/source/include/linux/fs.h#L1394
 
 
 vollog = logging.getLogger(__name__)
@@ -74,8 +75,8 @@ class Mount(interfaces.plugins.PluginInterface):
                                                 description='Sort mounts by mount ID',
                                                 optional=True,
                                                 default=False)
-        ]
-    
+                ]
+
     @classmethod
     def get_all_mounts(cls,
                        context: interfaces.context.ContextInterface,
@@ -96,26 +97,29 @@ class Mount(interfaces.plugins.PluginInterface):
         else:
             mnt_type = 'vfsmount'
             mount_hashtable_type = 'list_head'
-        
+
         # in kernel < 3.13.9 mount_hashtable size is predefined
         if mount_hashtable_type == 'list_head':
             list_head_size = vmlinux.get_type('list_head').size
             page_size = layer.page_size
-            mount_hashtable_entries = 1 << int(math.log(page_size/list_head_size, 2))
-        
+            mount_hashtable_entries = 1 << int(
+                math.log(page_size/list_head_size, 2))
+
         # in kernel >= 3.13.9 mount_hashtable size is determined at boot time
         else:
             # m_hash_mask is the binary mask of the number of entries
-            mount_hashtable_entries = vmlinux.object_from_symbol('m_hash_mask') + 1
-        
+            mount_hashtable_entries = vmlinux.object_from_symbol(
+                'm_hash_mask') + 1
+
         vollog.info(f'mount_hashtable entries: {mount_hashtable_entries}')
 
         mount_hashtable_ptr = vmlinux.object_from_symbol('mount_hashtable')
         mount_hashtable = vmlinux.object(object_type='array',
-                                        offset=mount_hashtable_ptr,
-                                        subtype=vmlinux.get_type(mount_hashtable_type),
-                                        count=mount_hashtable_entries,
-                                        absolute=True)
+                                         offset=mount_hashtable_ptr,
+                                         subtype=vmlinux.get_type(
+                                             mount_hashtable_type),
+                                         count=mount_hashtable_entries,
+                                         absolute=True)
 
         # iterate through mount_hashtable
         for hash in mount_hashtable:
@@ -136,7 +140,8 @@ class Mount(interfaces.plugins.PluginInterface):
                 if mount.mnt_id < 0:
                     continue
                 try:
-                    devname = utility.pointer_to_string(mount.mnt_devname, MAX_STRING)
+                    devname = utility.pointer_to_string(
+                        mount.mnt_devname, MAX_STRING)
                 except exceptions.PagedInvalidAddressException:
                     continue
                 else:
@@ -172,19 +177,20 @@ class Mount(interfaces.plugins.PluginInterface):
             try:
                 mnt_ns = task.get_mnt_ns()
             except AttributeError as ex:
-                vollog.error(f'No mount namespace information available: {str(ex)}')
+                vollog.error(
+                    f'No mount namespace information available: {str(ex)}')
                 return
             except exceptions.PagedInvalidAddressException:
                 vollog.error(f'Cannot extract mounts from pid {task.pid}')
                 continue
-            
+
             # get identifier for mnt_ns
             try:
                 identifier = mnt_ns.get_inum()
             # in kernel < 3.8 mnt_namespace has no inum, track address of the mnt_namespace struct instead
             except AttributeError:
                 identifier = mnt_ns.vol.offset
-            
+
             # make sure we haven't seen this namespace yet
             if identifier in seen_mnt_namespaces:
                 continue
@@ -200,7 +206,7 @@ class Mount(interfaces.plugins.PluginInterface):
     def get_mount_info(cls,
                        context: interfaces.context.ContextInterface,
                        vmlinux_module_name: str,
-                       mount:symbols.linux.extensions.mount,
+                       mount: symbols.linux.extensions.mount,
                        task: symbols.linux.extensions.task_struct) -> Tuple[int, str, str, str, str, str, str]:
         """Parse a mount and return the following tuple:
         id, devname, path, absolute_path, fstype, access, flags
@@ -227,7 +233,8 @@ class Mount(interfaces.plugins.PluginInterface):
         # get path
         if task is not None:
             try:
-                path = symbols.linux.LinuxUtilities.prepend_path(mount.get_mnt_root().dereference(), mount, task.fs.root)
+                path = symbols.linux.LinuxUtilities.prepend_path(
+                    mount.get_mnt_root().dereference(), mount, task.fs.root)
             except exceptions.PagedInvalidAddressException:
                 path = ''
             else:
@@ -241,7 +248,8 @@ class Mount(interfaces.plugins.PluginInterface):
             mnt_parent = mount.mnt_parent.dereference()
             mnt_root = mount.get_mnt_root().dereference()
             try:
-                path = symbols.linux.LinuxUtilities._do_get_path(s_root, mnt_parent, mnt_root, mount)
+                path = symbols.linux.LinuxUtilities._do_get_path(
+                    s_root, mnt_parent, mnt_root, mount)
             except exceptions.PagedInvalidAddressException:
                 path = ''
 
@@ -251,7 +259,7 @@ class Mount(interfaces.plugins.PluginInterface):
         # when a mount has a master, its absolute path is the master's path
         if mount.mnt_master != 0:
             root_mnt = mount.mnt_master.dereference()
-            
+
         # otherwise, the mount's absolute path is calculated by treating its root as belonging to the absolute fs root mount
         else:
             root_mnt = init_task.fs.root.mnt.dereference()
@@ -260,7 +268,8 @@ class Mount(interfaces.plugins.PluginInterface):
 
         # the absolute path is calculated relative to the fs root of the init task
         try:
-            absolute_path = symbols.linux.LinuxUtilities.prepend_path(dentry, root_mnt, init_task.fs.root)
+            absolute_path = symbols.linux.LinuxUtilities.prepend_path(
+                dentry, root_mnt, init_task.fs.root)
         except exceptions.PagedInvalidAddressException:
             absolute_path = ''
         else:
@@ -270,7 +279,8 @@ class Mount(interfaces.plugins.PluginInterface):
 
         # get fs typee
         try:
-            fs_type = utility.pointer_to_string(mount.get_mnt_sb().dereference().s_type.dereference().name, MAX_STRING)
+            fs_type = utility.pointer_to_string(
+                mount.get_mnt_sb().dereference().s_type.dereference().name, MAX_STRING)
         except exceptions.PagedInvalidAddressException:
             fs_type = ''
 
@@ -293,7 +303,7 @@ class Mount(interfaces.plugins.PluginInterface):
                     flags.append(MNT_FLAGS[flag])
                 except KeyError:
                     flags.append(f'FLAG_{hex(flag)}')
-        
+
         return mnt_id, parent_id, devname, path, absolute_path, fs_type, access, ','.join(flags)
 
     def _generator(self):
@@ -307,21 +317,24 @@ class Mount(interfaces.plugins.PluginInterface):
             if not pids:
                 pids = [1]
             pid_filter = pslist.PsList.create_pid_filter(pids)
-            mounts = self.get_mounts(self.context, self.config['kernel'], pid_filter)
-        
+            mounts = self.get_mounts(
+                self.context, self.config['kernel'], pid_filter)
+
         # sort mounts by ID
         if self.config.get('sort', False):
-            mounts_by_id = {mount.mnt_id: (task, mount) for task, mount in mounts}
+            mounts_by_id = {mount.mnt_id: (task, mount)
+                            for task, mount in mounts}
             ids = list(mounts_by_id.keys())
             ids.sort()
             mounts = [mounts_by_id[id] for id in ids]
 
         for task, mount in mounts:
             yield (0, self.get_mount_info(self.context, self.config['kernel'], mount, task=task))
-    
+
     def run(self):
         # make sure 'all' and 'pid' aren't used together
         if self.config.get('all') and self.config.get('pid'):
-            raise exceptions.PluginRequirementException('"pid" and "all" cannot be used together')
+            raise exceptions.PluginRequirementException(
+                '"pid" and "all" cannot be used together')
 
         return renderers.TreeGrid([('Mount ID', int), ('Parent ID', int), ('Devname', str), ('Path', str), ('Absolute Path', str), ('FS Type', str), ('Access', str), ('Flags', str)], self._generator())

@@ -11,35 +11,35 @@ from volatility3.framework import exceptions
 
 # inode types
 # see https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/stat.h
-S_IFMT   = 0o170000 # inode type mask
-S_IFSOCK = 0o140000 # socket
-S_IFLNK  = 0o120000 # symbolic link
-S_IFREG  = 0o100000 # regular file
-S_IFBLK  = 0o60000  # block device
-S_IFDIR  = 0o40000  # directory
-S_IFCHR  = 0o20000  # character device
-S_IFIFO  = 0o10000  # fifo (pipe)
-S_ISUID  = 0o4000
-S_ISGID  = 0o2000
-S_ISVTX  = 0o1000
+S_IFMT = 0o170000  # inode type mask
+S_IFSOCK = 0o140000  # socket
+S_IFLNK = 0o120000  # symbolic link
+S_IFREG = 0o100000  # regular file
+S_IFBLK = 0o60000  # block device
+S_IFDIR = 0o40000  # directory
+S_IFCHR = 0o20000  # character device
+S_IFIFO = 0o10000  # fifo (pipe)
+S_ISUID = 0o4000
+S_ISGID = 0o2000
+S_ISVTX = 0o1000
 
 # user permissions
-S_IRWXU = 0o700 # user permissions mask
-S_IRUSR = 0o400 # user read
-S_IWUSR = 0o200 # user write
-S_IXUSR = 0o100 # user execute
+S_IRWXU = 0o700  # user permissions mask
+S_IRUSR = 0o400  # user read
+S_IWUSR = 0o200  # user write
+S_IXUSR = 0o100  # user execute
 
 # group permissions
-S_IRWXG = 0o070 # group permissions mask
-S_IRGRP = 0o040 # group read
-S_IWGRP = 0o020 # group write
-S_IXGRP = 0o010 # group execute
+S_IRWXG = 0o070  # group permissions mask
+S_IRGRP = 0o040  # group read
+S_IWGRP = 0o020  # group write
+S_IXGRP = 0o010  # group execute
 
 # other permissions
-S_IRWXO = 0o007 # other permissions mask
-S_IROTH = 0o004 # other read
-S_IWOTH = 0o002 # other write
-S_IXOTH = 0o001 # other execute
+S_IRWXO = 0o007  # other permissions mask
+S_IROTH = 0o004  # other read
+S_IWOTH = 0o002  # other write
+S_IXOTH = 0o001  # other execute
 
 
 vollog = logging.getLogger(__name__)
@@ -83,7 +83,7 @@ class ListFiles(interfaces.plugins.PluginInterface):
                                             description='Sort files by path',
                                             optional=True)
         ]
-    
+
     @classmethod
     def create_mount_filter(cls, mnt_list: List[int] = None) -> Callable[[Any], bool]:
         """Constructs a filter function for mount IDs.
@@ -104,7 +104,7 @@ class ListFiles(interfaces.plugins.PluginInterface):
             return filter_func
         else:
             return lambda _: False
-    
+
     @classmethod
     def create_path_filter(cls, path) -> Callable[[Any], bool]:
         """Constructs a filter function for file paths.
@@ -118,9 +118,9 @@ class ListFiles(interfaces.plugins.PluginInterface):
 
         def filter_func(x):
             return not x.startswith(path)
-        
+
         return filter_func
-    
+
     @classmethod
     def create_uid_filter(cls, uid_list: List[int] = None) -> Callable[[Any], bool]:
         """Constructs a filter function for owner UIDs.
@@ -137,13 +137,13 @@ class ListFiles(interfaces.plugins.PluginInterface):
 
             def filter_func(uid):
                 return uid not in filter_list
-            
+
             return filter_func
         else:
             return lambda _: False
 
     @classmethod
-    def _mode_to_str(cls, mode:int) -> str:
+    def _mode_to_str(cls, mode: int) -> str:
         """Calculate the mode string (see http://cvsweb.netbsd.org/bsdweb.cgi/src/lib/libc/string/strmode.c?rev=1.16&content-type=text/x-cvsweb-markup)"""
         string = ''
 
@@ -165,7 +165,7 @@ class ListFiles(interfaces.plugins.PluginInterface):
             string += 'p'
         else:
             string += '?'
-        
+
         # get user permissions
         string += 'r' if mode & S_IRUSR else '-'
         string += 'w' if mode & S_IWUSR else '-'
@@ -178,7 +178,7 @@ class ListFiles(interfaces.plugins.PluginInterface):
             string += 'S'
         elif user_execute == S_IXUSR | S_ISUID:
             string += 's'
-        
+
         # get group permissions
         string += 'r' if mode & S_IRGRP else '-'
         string += 'w' if mode & S_IWGRP else '-'
@@ -220,7 +220,8 @@ class ListFiles(interfaces.plugins.PluginInterface):
         """
         # get file path
         try:
-            path = symbols.linux.LinuxUtilities.prepend_path(dentry, mount, task.fs.root)
+            path = symbols.linux.LinuxUtilities.prepend_path(
+                dentry, mount, task.fs.root)
         except exceptions.PagedInvalidAddressException:
             path = ''
         else:
@@ -240,7 +241,7 @@ class ListFiles(interfaces.plugins.PluginInterface):
             inode_id = -1
             inode_addr = 0
             inode = None
-        
+
         # get file info
         mode = ''
         uid = -1
@@ -272,7 +273,7 @@ class ListFiles(interfaces.plugins.PluginInterface):
             accessed = inode.i_atime.tv_sec
 
         return mnt_id, inode_id, inode_addr, mode, uid, gid, size, created, modified, accessed, path
-    
+
     @classmethod
     def _walk_dentry(cls,
                      context: interfaces.context.ContextInterface,
@@ -300,8 +301,9 @@ class ListFiles(interfaces.plugins.PluginInterface):
             field_name = 'd_child' if dentry.has_member('d_child') else 'd_u'
             for subdir_dentry in dentry.d_subdirs.to_list(symbol_table + constants.BANG + 'dentry', field_name):
                 # walk subdir dentry
-                cls._walk_dentry(context, vmlinux_module_name, dentry_set, subdir_dentry)
-    
+                cls._walk_dentry(context, vmlinux_module_name,
+                                 dentry_set, subdir_dentry)
+
     @classmethod
     def get_dentries(cls,
                      context: interfaces.context.ContextInterface,
@@ -319,15 +321,18 @@ class ListFiles(interfaces.plugins.PluginInterface):
         if pid_filter is None:
             pid_filter = pslist.PsList.create_pid_filter([1])
 
-        non_filtered_mounts = mount_plugin.Mount.get_mounts(context, vmlinux_module_name, pid_filter)
-        
+        non_filtered_mounts = mount_plugin.Mount.get_mounts(
+            context, vmlinux_module_name, pid_filter)
+
         # filter out mounts
-        mounts = [(task, mount) for task, mount in non_filtered_mounts if not mnt_filter(mount)]
+        mounts = [(task, mount)
+                  for task, mount in non_filtered_mounts if not mnt_filter(mount)]
         num_mounts = len(mounts)
 
         for i, (task, mount) in enumerate(mounts):
-            vollog.info(f'[{i}/{num_mounts}]  listing files for mount ID {mount.mnt_id}')
-            
+            vollog.info(
+                f'[{i}/{num_mounts}]  listing files for mount ID {mount.mnt_id}')
+
             # set of dentry addresses for this mount
             mount_dentries = set()
 
@@ -335,15 +340,17 @@ class ListFiles(interfaces.plugins.PluginInterface):
             root_dentry = mount.get_mnt_root().dereference()
 
             # walk root dentry and extract all dentries recursively
-            cls._walk_dentry(context, vmlinux_module_name, mount_dentries, root_dentry)
+            cls._walk_dentry(context, vmlinux_module_name,
+                             mount_dentries, root_dentry)
 
             # add dentries for this mount to global list
             for dentry_ptr in mount_dentries:
-                dentry = vmlinux.object(object_type='dentry', offset=dentry_ptr, absolute=True)
+                dentry = vmlinux.object(
+                    object_type='dentry', offset=dentry_ptr, absolute=True)
                 dentries.append((task, mount, dentry))
-        
+
         return dentries
-    
+
     def _generator(self):
         # create path and UID filters
         path_filter = self.create_path_filter(self.config.get('path', None))
@@ -351,14 +358,14 @@ class ListFiles(interfaces.plugins.PluginInterface):
 
         # get requested PIDs
         pids = self.config.get('pid')
-        
+
         # if a mount list was specified but PID list wasn't, extract mounts from all PIDs
         if self.config.get('mount') and not pids:
             # get PIDs of all tasks
             pids = []
             for task in pslist.PsList.list_tasks(self.context, self.config['kernel']):
                 pids.append(task.pid)
-        
+
         # build PID filter
         if pids:
             pid_filter = pslist.PsList.create_pid_filter(pids)
@@ -378,7 +385,8 @@ class ListFiles(interfaces.plugins.PluginInterface):
         for i, (task, mount, dentry) in enumerate(dentries):
             # print info message every 1000 files
             if i % 1000 == 0:
-                vollog.info(f'[{i}/{num_dentries}]  extracting file info and filtering paths')
+                vollog.info(
+                    f'[{i}/{num_dentries}]  extracting file info and filtering paths')
 
             info = self.get_file_info(task, mount, dentry)
             # info could not be extracted
@@ -389,7 +397,7 @@ class ListFiles(interfaces.plugins.PluginInterface):
             # apply path and UID filters
             if not path_filter(file_path) and not uid_filter(uid):
                 files[file_path] = mnt_id, inode_id, inode_addr, mode, uid, gid, size, created, modified, accessed, file_path
-        
+
         paths = list(files.keys())
         # sort files by path
         if self.config.get('sort', None):
@@ -397,8 +405,9 @@ class ListFiles(interfaces.plugins.PluginInterface):
             paths.sort()
             vollog.info('done sorting')
         for path in paths:
-            mnt_id, inode_id, inode_addr, mode, uid, gid, size, created, modified, accessed, file_path = files[path]
+            mnt_id, inode_id, inode_addr, mode, uid, gid, size, created, modified, accessed, file_path = files[
+                path]
             yield (0, (mnt_id, inode_id, format_hints.Hex(inode_addr), mode, uid, gid, size, created, modified, accessed, file_path))
-    
+
     def run(self):
         return renderers.TreeGrid([('Mount ID', int), ('Inode ID', int), ('Inode Address', format_hints.Hex), ('Mode', str), ('UID', int), ('GID', int), ('Size', int), ('Created', int), ('Modified', int), ('Accessed', int), ('File Path', str)], self._generator())
