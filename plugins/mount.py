@@ -154,7 +154,7 @@ class Mount(interfaces.plugins.PluginInterface):
                     if not fs_type or not fs_type.isprintable() or not all(ord(c) < 128 for c in fs_type):
                         break
 
-                # yield None with the mount for consistent with get_mounts
+                # yield None with the mount for consistency with get_mounts
                 yield None, mount
 
     @classmethod
