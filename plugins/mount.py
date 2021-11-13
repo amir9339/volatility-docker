@@ -130,18 +130,29 @@ class Mount(interfaces.plugins.PluginInterface):
                     continue
                 first_mount = hash.first.dereference().cast(mnt_type)
 
-            # walk linked list of mounts
+            # walk linked list of mounts - the last list member may point to an invalid mount, in which case we need to stop iterating
             for mount in first_mount.mnt_hash.to_list(symbol_table + constants.BANG + mnt_type, 'mnt_hash', sentinel=False):
-                # make sure the mount is valid
-                if mount.mnt_id < 0:
-                    continue
+                # validity check - id between 0 and 10000
+                if not 0 <= mount.mnt_id <= 10000:
+                    break
+
+                # validity check - devname must be printable and made of ascii characters
                 try:
                     devname = utility.pointer_to_string(mount.mnt_devname, MAX_STRING)
                 except exceptions.PagedInvalidAddressException:
-                    continue
+                    break
                 else:
-                    if not devname or not devname.isprintable():
-                        continue
+                    if not devname or not devname.isprintable() or not all(ord(c) < 128 for c in devname):
+                        break
+                
+                # same check with fstype
+                try:
+                    fs_type = utility.pointer_to_string(mount.get_mnt_sb().dereference().s_type.dereference().name, MAX_STRING)
+                except exceptions.PagedInvalidAddressException:
+                    break
+                else:
+                    if not fs_type or not fs_type.isprintable() or not all(ord(c) < 128 for c in fs_type):
+                        break
 
                 # yield None with the mount for consistent with get_mounts
                 yield None, mount

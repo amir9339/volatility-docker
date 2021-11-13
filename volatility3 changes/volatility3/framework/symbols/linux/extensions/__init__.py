@@ -756,4 +756,10 @@ class kernel_cap_struct(objects.StructType):
 
 
 class net_device(objects.StructType):
-    pass
+    def get_ip_ptr(self):
+        # in kernel < 3.0.0, ip_ptr is a void pointer, so we need to cast it to in_device
+        return self.ip_ptr.dereference().cast('in_device')
+    
+    def get_ip6_ptr(self):
+        # in kernel < 3.0.0, ip6_ptr is a void pointer, so we need to cast it to inet6_dev
+        return self.ip6_ptr.dereference().cast('inet6_dev')

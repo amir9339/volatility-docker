@@ -107,7 +107,7 @@ class Ifconfig(interfaces.plugins.PluginInterface):
 
         # get IPv4 info
         try:
-            first_in_ifaddr = net_dev.ip_ptr.ifa_list.dereference()
+            first_in_ifaddr = net_dev.get_ip_ptr().ifa_list.dereference()
             ipv4_addr = conversion.convert_ipv4(first_in_ifaddr.ifa_address)
             ipv4_prefixlen = first_in_ifaddr.ifa_prefixlen
         except exceptions.PagedInvalidAddressException:
@@ -118,8 +118,17 @@ class Ifconfig(interfaces.plugins.PluginInterface):
         ipv6_addr = ''
         ipv6_prefixlen = 0
         try:
-            inet6_dev = net_dev.ip6_ptr.dereference()
-            for inet6_ifaddr in inet6_dev.addr_list.to_list(symbol_table + constants.BANG + 'inet6_ifaddr', 'if_list', sentinel=True):
+            inet6_dev = net_dev.get_ip6_ptr()
+
+            # get inet6_ifaddr iterator
+            try:
+                inet6_ifaddrs = inet6_dev.addr_list.to_list(symbol_table + constants.BANG + 'inet6_ifaddr', 'if_list', sentinel=True)
+            # in kernel < 3.0.0, inet6_dev.addr_list is a pointer to the first inet6_ifaddr (as opposed to a list head)
+            except AttributeError:
+                # each inet6_ifaddr points to the next through 'ifpub'
+                inet6_ifaddrs = symbols.linux.LinuxUtilities.walk_internal_list(vmlinux, 'inet6_ifaddr', 'ifpub', inet6_dev.addr_list.dereference())
+
+            for inet6_ifaddr in inet6_ifaddrs:
                 ipv6_addr = conversion.convert_ipv6(inet6_ifaddr.addr.in6_u.u6_addr32)
                 ipv6_prefixlen = inet6_ifaddr.prefix_len
                 # use only first address
