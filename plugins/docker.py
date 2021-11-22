@@ -23,22 +23,23 @@ DOCKER_CGROUPS_PATH_LEN         = 5
 PRIV_CONTAINER_EFF_CAPS         = 0x3fffffffff
 
 MOUNTS_ABS_STARTING_PATH_WHITELIST = (
-    "-", # Interanl mount
     "/sys/fs/cgroup", # Default mount
 )
 
 MOUNTS_ABS_ENDING_PATH_WHITELIST = (
     "/merged", # Merged dir mount only, not sus
     "/merged/dev", # Default mount
-    "/merged/etc/resolv.conf", # Default mount
-    "/merged/etc/hostname", # Default mount
-    "/merged/etc/hosts", # Default mount
-    "/merged/run/systemd/resolve/stub-resolv.conf" # Default mount
+    "/resolv.conf", # Default mount
+    "/hostname", # Default mount
+    "/hosts", # Default mount
+    "/merged/run/systemd/resolve/stub-resolv.conf" # Default mount,
+
 )
 
 MOUNTS_PATH_WHITELIST = (
     "/proc", # Default mounts
-    "/sys" # Default mount
+    "/sys", # Default mount
+    "/dev"  # Default mount
 )
 
 CAPABILITIES = [
@@ -86,6 +87,7 @@ CAPABILITIES = [
     "CAP_CHECKPOINT_RESTORE"
 ]
 
+
 class Detector():
     """ This class has set of functions for docker detection on system """
 
@@ -94,9 +96,10 @@ class Detector():
         self.vmlinux = vmlinux # Volatility req
         self.tasks_list = tasks_list # Tasks objects list
         self.mounts = mount.Mount.get_all_mounts(self.context, self.vmlinux.name) # Get mounts from plugin
-        self.net_devices = ifconfig.Ifconfig.get_devices_namespaces(self.context, self.vmlinux.name)
+        self.net_devices = ifconfig.Ifconfig.get_net_devs(self.context, self.vmlinux.name)
 
-    def _detect_docker_network_interface(self, name, mac_addr) -> bool:
+    @staticmethod
+    def _detect_docker_network_interface(name, mac_addr) -> bool:
         """ 
         This function search for an docker standard interface. 
         Looking for an interface whose name starts with 'docker' and its MAC vendor starts with '02:42' (the last 4 bytes are calculated on the fly)
@@ -104,7 +107,8 @@ class Detector():
 
         return name.startswith(DOCKER_INTERFACE_STARTER) and mac_addr.startswith(DOCKER_MAC_VENDOR_STARTER)
 
-    def _detect_docker_veths(self, name, mac_addr) -> bool:
+    @staticmethod
+    def _detect_docker_veths(name, mac_addr) -> bool:
         """ 
         This function is looking for virtual interface that are used inside containers.
         Almost the same way as in _detect_docker_network_interface function.
@@ -113,7 +117,8 @@ class Detector():
 
         return name.startswith(VETH_NAME_STARTER) and mac_addr.startswith(DOCKER_MAC_VENDOR_STARTER)
 
-    def _detect_overlay_fs(self, fstype, path) -> bool:
+    @staticmethod
+    def _detect_overlay_fs(fstype, path) -> bool:
         """
         This function is looking for 'overlay' FS mounted inside docker standard path:
             /var/lib/docker/
@@ -122,7 +127,8 @@ class Detector():
 
         return OVERLAY in fstype and path.startswith(DOCKER_MOUNT_PATH)
     
-    def _detect_containerd_shim(self, proc_name) -> bool:
+    @staticmethod
+    def _detect_containerd_shim(proc_name) -> bool:
         """
         Containerd-shim is the parent process of all docker containers. Example can be seen in this output of `ps auxf` command:
             root        6398 713104  3120 16:00 /usr/bin/containerd-shim-runc-v2 -namespace moby -id
@@ -149,17 +155,18 @@ class Detector():
                 break
         
         # Get mounts list from mem using mount plugin and look for overlay FS mounts inside docker's dir
-        for mnt in self.mounts:
+        for task, mnt in self.mounts:
 
-            id, pid, devname, path, abs_type, fstype, access, flags = mount.Mount.get_mount_info(mnt)
+            _id, _pid, _devname, path, _abs_type, fstype, _access, _flags = mount.Mount.get_mount_info(self.context, self.vmlinux.name, mnt, task=task)
 
             if self._detect_overlay_fs(fstype, path):
                 overlay_fs_exists = True
                 break
     
         # Look for docker related interfaces
-        for net_dev in self.net_devices:
-            name, ip_addr, mac_addr, promisc = ifconfig.Ifconfig._gather_net_dev_info(self.context, self.vmlinux.name, net_dev)
+        for _net_ns, net_dev in self.net_devices:
+            name, mac_addr, _ipv4_addr, ipv4_prefixlen, ipv6_addr, ipv6_prefixlen, promisc \
+                = ifconfig.Ifconfig.get_net_dev_info(self.context, self.vmlinux.name, net_dev)
 
             if self._detect_docker_network_interface(name, mac_addr):
                 docker_eth_exists = True
@@ -168,6 +175,7 @@ class Detector():
                 docker_veth_exists = True
 
         yield docker_eth_exists, docker_veth_exists, overlay_fs_exists, container_shim_running
+
 
 class Ps():
     def __init__(self, context, vmlinux, tasks_list) -> None:
@@ -212,10 +220,10 @@ class Ps():
 
         pid_filter = pslist.PsList.create_pid_filter([container_pid]) 
         process_mounts = mount.Mount.get_mounts(self.context, self.vmlinux.name, pid_filter) # Extract mounts for this process
-        process_mounts = [mount.Mount.get_mount_info(mnt) for mnt in process_mounts] # Extract mount info for each mount point
+        process_mounts = [mount.Mount.get_mount_info(self.context, self.vmlinux.name, mnt, task=task) for task, mnt in process_mounts] # Extract mount info for each mount point
 
         # Iterate each mount in mounts list
-        for mnt_id, parent_id, devname, path, absolute_path, fs_type, access, flags in process_mounts:
+        for _mnt_id, _parent_id, _devname, _path, absolute_path, _fs_type, _access, _flags in process_mounts:
             
             splitted_path = absolute_path.split("/")
 
@@ -223,6 +231,7 @@ class Ps():
             if absolute_path.startswith(DOCKER_CGROUPS_PATH):
                 container_id = splitted_path[-1] # Extract container_id from path
                 return container_id
+        return None
     
     def generate_list(self, extended=True):
         """ 
@@ -250,7 +259,8 @@ class Ps():
                         yield creation_time, command, container_id, is_priv, pid, effective_uid
                     else:
                         yield container_id[:11], command, creation_time, pid
-    
+
+
 class InspectCaps():
     """ This class has methods for capabilites extraction and convertion """
 
@@ -265,7 +275,8 @@ class InspectCaps():
         self.tasks_list = tasks_list
         self.containers_pids = containers_pids
 
-    def _caps_hex_to_string(self, caps) -> list:
+    @staticmethod
+    def _caps_hex_to_string(caps) -> list:
         """ 
         Linux active capabilities are saved as a bits sequense where each bit is a flag for each capability.
         This function iterate each flag in seq and if it's active it adds the specific capability to the list as a string represents it's name.
@@ -302,6 +313,7 @@ class InspectCaps():
                     effective_caps_list = self._caps_hex_to_string(effective_caps)
                     yield pid, container_id, hex(effective_caps), ','.join(effective_caps_list)
 
+
 class InspectMounts():
     """ This class has methods for interesting mounts extraction """
 
@@ -328,12 +340,14 @@ class InspectMounts():
         for pid in self.containers_pids:
             pid_filter = pslist.PsList.create_pid_filter([pid])
             process_mounts = mount.Mount.get_mounts(self.context, self.vmlinux.name, pid_filter) # Extract mounts for this process
-            process_mounts = [mount.Mount.get_mount_info(mnt) for mnt in process_mounts] # Extract mount info for each mount point
+            process_mounts = [mount.Mount.get_mount_info(self.context, self.vmlinux.name, mnt, task=task) for task, mnt in process_mounts] # Extract mount info for each mount point
+
             # Iterate each mount in mounts list
             for mnt_id, parent_id, devname, path, absolute_path, fs_type, access, flags in process_mounts:
                 if (not absolute_path.startswith(MOUNTS_ABS_STARTING_PATH_WHITELIST)
                     and not absolute_path.endswith(MOUNTS_ABS_ENDING_PATH_WHITELIST)
-                    and not path.startswith(MOUNTS_PATH_WHITELIST)):
+                    and not path.startswith(MOUNTS_PATH_WHITELIST)
+                    and path):
                     
                     # Get container-id from Ps class
                     container_id = Ps(self.context, self.vmlinux, self.tasks_list).get_container_id(pid)
@@ -343,20 +357,22 @@ class InspectMounts():
                     else:
                         yield pid, container_id[:11], path, absolute_path, fs_type
 
+
 class InspectNetworks():
     def __init__(self, context, vmlinux, tasks_list, containers_pids) -> None:
         self.context = context # Volatility req
         self.vmlinux = vmlinux # Volatility req
         self.tasks_list = tasks_list
         self.containers_pids = containers_pids
-        self.net_devices = ifconfig.Ifconfig.get_devices_namespaces(self.context, self.vmlinux.name)
+        self.net_devices = ifconfig.Ifconfig.get_net_devs(self.context, self.vmlinux.name)
     
     def list_docker_networks(self) -> dict:
         """
-        This function will list docker networks by walking in interfaces list,
+        This function will list docker networks by walking on interfaces list,
             extract interfaces that their MAC adress starts with Docker vendor ID,
             match between containers net ns id and intreface's related net ns and then return a dict
             of networks (represented by network segment) and the containers connected to it.
+        Note that this function does not support ipv6 - only docker containers
         """
 
         containers_net_ns_dict = {
@@ -372,24 +388,32 @@ class InspectNetworks():
         for task in self.tasks_list:
             if task.pid in self.containers_pids:
                 # Extract ns info from task to get network ns
-                task_info = pslist.PsList.get_task_info(self.context, self.vmlinux.name, task)
+                task_info = pslist.PsList.get_task_info(self.context, self.vmlinux.name, task, nsinfo=True)
                 net_ns_id = task_info.net_ns
 
                 # Get container-id from Ps class
                 container_id = Ps(self.context, self.vmlinux, self.tasks_list).get_container_id(task.pid)
                 containers_net_ns_dict[net_ns_id] = (container_id, task.pid)
-        
+
         # Iterate devices list and get Docker devices
-        for net_dev in self.net_devices:
-            name, ip_addr, mac_addr, _ = ifconfig.Ifconfig._gather_net_dev_info(self.context, self.vmlinux.name, net_dev)
-            
+        for net_ns, net_dev in self.net_devices:
+            _name, mac_addr, ipv4_addr, _ipv4_prefixlen, _ipv6_addr, _ipv6_prefixlen, _promisc \
+                = ifconfig.Ifconfig.get_net_dev_info(self.context, self.vmlinux.name, net_dev)
+
             # If interface recognized as a docker related interface
             if mac_addr.startswith(DOCKER_MAC_VENDOR_STARTER):
-                segment = ip_addr.split(".")
+                segment = ipv4_addr.split(".")
                 segment = f"{segment[0]}.{segment[1]}" # Get only first two octats of ip addr
 
-                dev_net_ns = 1 # TODO: FIll after Ofek's commit
-                ns_related_container = containers_net_ns_dict[dev_net_ns]
+                containers_net_ns_list = containers_net_ns_dict.keys() # Get all containers net ns ids
+                
+                # If network ns is in containers list
+                # This if statement excludes docker0 interface that lives inside the native net ns 
+                #   and it's not related to a specific container
+                if net_ns in containers_net_ns_list:
+                    ns_related_container = containers_net_ns_dict[net_ns]
+                else:
+                    continue
 
                 # If network segment is already a key in the dict, append container to its list
                 if segment in networks_dict.keys():
@@ -411,9 +435,9 @@ class InspectNetworks():
             if extended:
                 containers_ids = [container[0] for container in containers] 
             else:
-                containers_ids = [container[0][11] for container in containers]
+                containers_ids = [container[0][:11] for container in containers]
             containers_ids = ','.join(containers_ids)
-            pids = [container[1] for container in containers]
+            pids = [str(container[1]) for container in containers]
             pids = ','.join(pids)
 
             # If extended yield also pids
@@ -421,8 +445,9 @@ class InspectNetworks():
                 yield network, containers_ids, pids
             else:
                 yield network, containers_ids
-                    
-class Docker(interfaces.plugins.PluginInterface) :
+
+
+class Docker(interfaces.plugins.PluginInterface):
     """ Main class for docker plugin """
 
     _required_framework_version = (2, 0, 0)
@@ -541,7 +566,7 @@ class Docker(interfaces.plugins.PluginInterface) :
             and not self.config.get("inspect-mounts") and not self.config.get("inspect-mounts-extended") \
             and not self.config.get("inspect-networks") and not self.config.get("inspect-networks-extended"):
             
-            vollog.error(f'No option selected')
+            vollog.error('No option selected')
             raise exceptions.PluginRequirementException('No option selected')
 
         if self.config.get("detector"):
@@ -570,9 +595,9 @@ class Docker(interfaces.plugins.PluginInterface) :
                             ('Flags', str)])
 
         if self.config.get("inspect-networks"):
-            columns.extend([('Network segment', str), ('Container ID', str)])
+            columns.extend([('Network segment', str), ('Containers IDs', str)])
 
         if self.config.get("inspect-networks-extended"):
-            columns.extend([('Network segment', str), ('Container ID', str), ('Container PID', int)])
+            columns.extend([('Network segment', str), ('Containers IDs', str), ('Containers PIDs', str)])
 
         return renderers.TreeGrid(columns, self._generator())
