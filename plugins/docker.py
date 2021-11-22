@@ -416,7 +416,7 @@ class InspectNetworks():
                     continue
 
                 # If network segment is already a key in the dict, append container to its list
-                if segment in networks_dict.keys():
+                if segment in networks_dict:
                     networks_dict[segment].append(ns_related_container)
                 else:
                     networks_dict[segment] = [ns_related_container]
