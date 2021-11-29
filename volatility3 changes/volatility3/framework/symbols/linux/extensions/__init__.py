@@ -434,12 +434,6 @@ class dentry(objects.StructType):
 
     def path(self) -> str:
         return self.d_name.name_as_str()
-    
-    def get_root(self):
-        root = self
-        while int(root.d_parent) != root.vol.offset:
-            root = root.d_parent.dereference()
-        return root
 
 
 class struct_file(objects.StructType):
