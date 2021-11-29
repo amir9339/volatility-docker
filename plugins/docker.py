@@ -20,7 +20,6 @@ OVERLAY                         = "overlay"
 CONTAINERD_PROCESS_COMMAND      = "containerd-shim"
 DOCKER_CGROUPS_PATH             = "/sys/fs/cgroup/memory/docker"
 DOCKER_CGROUPS_PATH_LEN         = 5
-PRIV_CONTAINER_EFF_CAPS         = 0x3fffffffff
 
 MOUNTS_ABS_STARTING_PATH_WHITELIST = (
     "/sys/fs/cgroup", # Default mount
@@ -233,6 +232,24 @@ class Ps():
                 return container_id
         return None
     
+    def get_init_task_cap(self):
+        """ 
+        These function returns init's task effective capabilities.
+        This value helps detect containers running with --privileged flag because they get all capabilities, and are equal to init task.
+
+        return init_task_cap (int) if succeed, None if failed
+        """
+
+        init_task = self.tasks_list[0]
+
+        # Double check if init task is found
+        if init_task.pid == 1:
+            init_task_info = pslist.PsList.get_task_info(self.context, self.vmlinux.name, init_task, credinfo=True)
+            init_task_cap = init_task_info.cap_eff
+            return init_task_cap
+        else:
+            return None
+
     def generate_list(self, extended=True):
         """ 
         This function generates a list of running containers in this format:
@@ -240,6 +257,8 @@ class Ps():
         """
 
         containers_pids = self.get_containers_pids()
+
+        priv_container_eff_caps = self.get_init_task_cap()
         
         # Search for container's tasks
         for task in self.tasks_list:
@@ -253,7 +272,7 @@ class Ps():
                     creation_time = task_info.start_time
                     creation_time = datetime.utcfromtimestamp(creation_time).isoformat(sep=' ', timespec='milliseconds')
                     effective_uid = task_info.eff_uid
-                    is_priv = task_info.cap_eff == PRIV_CONTAINER_EFF_CAPS
+                    is_priv = task_info.cap_eff == priv_container_eff_caps
 
                     if extended:
                         yield creation_time, command, container_id, is_priv, pid, effective_uid
@@ -571,10 +590,10 @@ class Docker(interfaces.plugins.PluginInterface):
 
         if self.config.get("detector"):
             columns.extend([('Docker inetrface', bool), ('Docker veth', bool), 
-                            ('Mounted overlay FS', bool), ('Containerd-shim is running', bool)])
+                            ('Mounted Overlay FS', bool), ('Containerd-shim is running', bool)])
 
         if self.config.get("ps"):
-            columns.extend([('Container ID', str), ('Command', str), ('Creation time (UTC)', str),
+            columns.extend([('Container ID', str), ('Command', str), ('Creation Time (UTC)', str),
                             ('PID', int)])
 
         if self.config.get("ps-extended"):
@@ -582,22 +601,22 @@ class Docker(interfaces.plugins.PluginInterface):
                             ('Is privileged', bool), ('PID', int), ('Effective UID', int)])
         
         if self.config.get("inspect-caps"):
-            columns.extend([('PID', int), ('Container ID', str), ('Effective capabilities value', str), ('Effective capabilities names', str)])
+            columns.extend([('PID', int), ('Container ID', str), ('Effective Capabilities Mask', str), ('Effective Capabilities Mames', str)])
         
         if self.config.get("inspect-mounts"):
-            columns.extend([('PID', int), ('Container ID', str), ('Path', str), 
-                            ('Absolute Path', str), ('FS type', str)])
+            columns.extend([('PID', int), ('Container ID', str), ('Container Path', str), 
+                            ('Host Path', str), ('FS type', str)])
         
         if self.config.get("inspect-mounts-extended"):
             columns.extend([('PID', int), ('Container ID', str), ('Mount ID', int), 
                             ('Parent ID', int), ('Device name', str), ('Path', str), 
-                            ('Absolute Path', str), ('FS type', str), ('Access', str),
+                            ('Absolute Path', str), ('FS Type', str), ('Access', str),
                             ('Flags', str)])
 
         if self.config.get("inspect-networks"):
-            columns.extend([('Network segment', str), ('Containers IDs', str)])
+            columns.extend([('Network /16 Segment', str), ('Containers IDs', str)])
 
         if self.config.get("inspect-networks-extended"):
-            columns.extend([('Network segment', str), ('Containers IDs', str), ('Containers PIDs', str)])
+            columns.extend([('Network /16 Segment', str), ('Containers IDs', str), ('Containers PIDs', str)])
 
         return renderers.TreeGrid(columns, self._generator())

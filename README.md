@@ -1,34 +1,37 @@
-## volatility-docker (temporary name)
+## volatility-docker
 <br />
 
 [![DeepSource](https://deepsource.io/gh/amir9339/volatility-docker.svg/?label=active+issues&show_trend=true&token=rispzL5PcBGqIqQ6VWX2FWRL)](https://deepsource.io/gh/amir9339/volatility-docker/?ref=repository-badge)
-<br />
 
 ### ✨ Project Description
 
-The objective of this project is to create a suite of [Volatility 3](https://github.com/volatilityfoundation/volatility3) plugins for memory forensics of Docker, Linux namespaces and other container related aspects.
-We want to submit this project to the 2021 Volatility Plugin Contest.
+The objective of this project is to create a suite of [Volatility 3](https://github.com/volatilityfoundation/volatility3) plugins for memory forensics of Docker containers. 
 
-### 🎯 Goals for the Project
+To achieve this, we developed improved versions of some of Volatility’s core plugins, intending to make them aware of Linux namespaces. Most of these plugins were never ported from Volatility 2, so they were remade to some extent.
 
-- Create plugins that are equivalent to the Volatility 2 plugins `mount`, `find_file` and `ifconfig`, while being completely aware of Linux namespaces (these plugins are needed for the other ones that are planned).
+After improving said core plugins, we used the additional namespace-related information they provide and developed the main plugin for this submission - the Docker plugin.
 
-- Create a plugin that can detect the presence of Docker containers based on processes, network interfaces, and FS artifacts.
-- Create a Docker command plugin that emulates common Docker commands such as:
-    - `docker ps`
-    - `docker network ls`
-    - `docker images`
-    - `docker diff`
-    - `docker save`
-    - `docker port`
-    - `docker logs`
-    - And more...
-- Create a plugin that detects common attacks / misconfigurations of Docker containers.
+[A full (but readable) explanation of plugin details can be found in the contest submission document](docs/contest_submission.md)
+
+
+
+### 🎯 Plugin options
+The Docker plugin has a few options:
+
+- **detector** - When choosing this option the plugin will give the investigator a quick indication about the presence of Docker / Docker containers running on the machine.
+
+- **ps** - When choosing this option the plugin will display a table, similar to docker ps command output, that shows the following details about running containers on the machine: container creation time, running command, container-id, is privileged, container process PID.
+
+- **inspect-caps** - When choosing this option a list of running containers will be displayed and the plugin will enumerate the containers’ capabilities.
+
+- **inspect-mounts** - When choosing this option a list of non-default mounts will be displayed with information about the associated container, mount paths, and mount options.
+
+- **inspect-networks** - When choosing this option a list of Docker networks will be displayed by their IP segments and the containers that are related to them.
 
 ### ✔️ Prerequisites:
 
-##### - Python 3
-##### - Volatility 3
+- Python 3
+- Volatility 3
 
 Install on Linux (Debian) using these commands:
 
@@ -50,5 +53,5 @@ Some other framework extensions are required. They are located under `volatility
 
 ### ✍️ Contributors
 
-- ##### [Ofek Shaked](https://github.com/oshaked1)
-- ##### [Amir Sheffer](https://github.com/amir9339)
+- [**Ofek Shaked**](https://github.com/oshaked1)
+- [**Amir Sheffer**](https://github.com/amir9339)
