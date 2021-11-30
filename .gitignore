@@ -1,8 +1,10 @@
 # Project specific
 volatility/
+volatility3/
 memory_samples/*
 *.lime
 prepare_for_commit.bat
+project_tests/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

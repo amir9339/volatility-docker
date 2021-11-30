@@ -1,9 +1,0 @@
-vol@volatility-docker:~$ lsns
-        NS TYPE   NPROCS   PID USER COMMAND
-4026531835 cgroup      3  1041 vol  /lib/systemd/systemd --user
-4026531836 pid         3  1041 vol  /lib/systemd/systemd --user
-4026531837 user        3  1041 vol  /lib/systemd/systemd --user
-4026531838 uts         3  1041 vol  /lib/systemd/systemd --user
-4026531839 ipc         3  1041 vol  /lib/systemd/systemd --user
-4026531840 mnt         3  1041 vol  /lib/systemd/systemd --user
-4026532000 net         3  1041 vol  /lib/systemd/systemd --user

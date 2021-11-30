@@ -1,3 +1,0 @@
-vol@volatility-docker:~$ sudo ls /var/lib/docker/containers
-ac221650209e08394b341706fa05793ee308e6c9644d04fde0582a8f68d26b4e
-db5eb3d076e9cfee16e64d411041785e6aa6f458fc3e21751a5dacae2cb27013

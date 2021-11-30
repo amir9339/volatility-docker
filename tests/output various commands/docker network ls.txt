@@ -1,6 +1,0 @@
-vol@volatility-docker:~$ sudo docker network ls
-NETWORK ID     NAME      DRIVER    SCOPE
-dd63beb6ef37   bridge    bridge    local
-0778faac000e   host      host      local
-de1ab213db2e   none      null      local
-be8014f06524   test_1    bridge    local
