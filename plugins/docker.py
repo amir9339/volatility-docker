@@ -601,7 +601,7 @@ class Docker(interfaces.plugins.PluginInterface):
                             ('Is privileged', bool), ('PID', int), ('Effective UID', int)])
         
         if self.config.get("inspect-caps"):
-            columns.extend([('PID', int), ('Container ID', str), ('Effective Capabilities Mask', str), ('Effective Capabilities Mames', str)])
+            columns.extend([('PID', int), ('Container ID', str), ('Effective Capabilities Mask', str), ('Effective Capabilities Names', str)])
         
         if self.config.get("inspect-mounts"):
             columns.extend([('PID', int), ('Container ID', str), ('Container Path', str), 
