@@ -1,6 +1,4 @@
 # Project specific
-volatility/
-volatility3/
 memory_samples/*
 *.lime
 prepare_for_commit.bat
