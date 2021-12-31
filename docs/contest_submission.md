@@ -1,5 +1,5 @@
 ## Volatility plugin contest 2021 Submissions - Namespaces support & Docker plugin
-### Ofek Shaqed & Amir Sheffer
+### Ofek Shaked & Amir Sheffer
 
 <br>
 
