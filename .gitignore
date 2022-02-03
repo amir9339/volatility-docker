@@ -1,5 +1,6 @@
 # Project specific
 memory_samples/*
+memory_samples.7z
 *.lime
 prepare_for_commit.bat
 project_tests/

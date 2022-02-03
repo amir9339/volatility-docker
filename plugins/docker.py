@@ -20,6 +20,7 @@ OVERLAY = "overlay"
 CONTAINERD_PROCESS_COMMAND = "containerd-shim"
 DOCKER_CGROUPS_PATH = "/sys/fs/cgroup/memory/docker"
 DOCKER_CGROUPS_PATH_LEN = 5
+DOCKER_CONTAINERS_DIR = "/var/lib/docker/containers"
 
 MOUNTS_ABS_STARTING_PATH_WHITELIST = (
     "/sys/fs/cgroup",  # Default mount
@@ -232,11 +233,28 @@ class Ps():
 
             splitted_path = absolute_path.split("/")
 
-            # Search for container's merged dir (container's FS) under overlay or overlay2 dir
+            # Search for container's cgroup mount in absolute path
             if absolute_path.startswith(DOCKER_CGROUPS_PATH):
-                # Extract container_id from path
+                # Extract container_id from absolute path
                 container_id = splitted_path[-1]
                 return container_id
+        
+        # No cgroup mount with an absolute path, this can happen if cgroup v2 is used.
+        # Instead, search for the mounted /etc/hostname, /etc/hosts or /etc/resolv.conf
+        # Iterate each mount in mounts list
+        for _mnt_id, _parent_id, _devname, path, absolute_path, _fs_type, _access, _flags in process_mounts:
+
+            splitted_path = absolute_path.split("/")
+
+            # Search for "/var/lib/docker/containers" in absolute path
+            if absolute_path.startswith(DOCKER_CONTAINERS_DIR):
+                # Make sure the mount is one of the standard mounts and not something weird
+                if path in ["/etc/resolv.conf", "/etc/hostname", "/etc/hosts"]:
+                    # Extract container_id from absolute path
+                    container_id = splitted_path[-2]
+                    return container_id
+        
+        # No container id found
         return ""
 
     def get_init_task_cap(self):
