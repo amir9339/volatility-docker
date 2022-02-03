@@ -218,6 +218,7 @@ class Ps():
         Then, it iterates container's process mounts and search for 
             container_id which is the name of container's dir under cgroups dir
             https://docs.docker.com/config/containers/runmetrics/
+        If no container_id is found, it returns an empty string.
         """
 
         pid_filter = pslist.PsList.create_pid_filter([container_pid])
@@ -236,7 +237,7 @@ class Ps():
                 # Extract container_id from path
                 container_id = splitted_path[-1]
                 return container_id
-        return None
+        return ""
 
     def get_init_task_cap(self):
         """ 
