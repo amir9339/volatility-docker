@@ -49,6 +49,7 @@ go get github.com/spf13/pflag
 go build # make sure go is installed first
 ./dwarf2json linux --system-map System.map-xxxx --elf vmlinux-xxxx > outfile.json # give the output file an appropriate name like Ubuntu-5.4.0-88-generic-Profile.json
 ```
+⚠️ If the generated profile is invalid (the "kernel" requirement is unsatisified when running a plugin), try generating it with the following command instead: `./dwarf2json linux --system-map System.map-xxxx --elf vmlinux-xxxx | xz -c > outfile.json.xz`.
 
 After obtaining the JSON file, place it under `volatility3/volatility3/framework/symbols/linux`.
 
