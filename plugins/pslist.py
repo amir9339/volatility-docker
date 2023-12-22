@@ -7,6 +7,7 @@ import logging
 from datetime import datetime
 
 from volatility3.framework import renderers, interfaces, symbols
+from volatility3.framework.symbols import linux
 from volatility3.framework.configuration import requirements
 from volatility3.framework.objects import utility
 from volatility3.framework.renderers import format_hints
@@ -108,7 +109,7 @@ class PsList(interfaces.plugins.PluginInterface):
     def get_task_info(cls,
                       context: interfaces.context.ContextInterface,
                       vmlinux_module_name: str,
-                      task: symbols.linux.extensions.task_struct,
+                      task: linux.extensions.task_struct,
                       boot_time: int = None,
                       nsinfo: bool = False,
                       credinfo: bool = False) -> TaskInfo:
