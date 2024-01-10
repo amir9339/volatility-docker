@@ -46,14 +46,16 @@ class TaskInfo:
     cap_bnd: int = -1
 
     def tuple(self, nsinfo: bool = False, credinfo: bool = False):
-        time_str = datetime.utcfromtimestamp(self.start_time).isoformat(sep=' ', timespec='milliseconds')
+        time_str = datetime.utcfromtimestamp(
+            self.start_time).isoformat(sep=' ', timespec='milliseconds')
         lst = [self.pid, self.ppid, self.name, time_str]
         if nsinfo:
-            lst.extend([self.pid_in_ns, self.uts_ns, self.ipc_ns, self.mnt_ns, self.net_ns, self.pid_ns, self.user_ns])
+            lst.extend([self.pid_in_ns, self.uts_ns, self.ipc_ns,
+                       self.mnt_ns, self.net_ns, self.pid_ns, self.user_ns])
         if credinfo:
             lst.extend([self.real_uid, self.real_gid, self.eff_uid, self.eff_gid, format_hints.Hex(self.cap_inh),
                         format_hints.Hex(self.cap_prm), format_hints.Hex(self.cap_eff), format_hints.Hex(self.cap_bnd)])
-        
+
         return tuple(lst)
 
 
@@ -72,7 +74,7 @@ class PsList(interfaces.plugins.PluginInterface):
             requirements.ListRequirement(name='pid',
                                          description='Filter on specific process IDs',
                                          element_type=int,
-                                         optional = True),
+                                         optional=True),
             requirements.BooleanRequirement(name='nsinfo',
                                             description='Display namespace information',
                                             optional=True,
@@ -127,7 +129,7 @@ class PsList(interfaces.plugins.PluginInterface):
         if boot_time is None:
             boot_time = symbols.linux.LinuxUtilities.get_boot_time(vmlinux)
         info.start_time = task.get_start_time(boot_time)
-        
+
         # extract namespace information
         if nsinfo:
             # Get namespace IDs.
@@ -142,7 +144,7 @@ class PsList(interfaces.plugins.PluginInterface):
                     info.uts_ns = nsproxy.get_uts_ns().get_inum()
                 except (AttributeError, exceptions.PagedInvalidAddressException):
                     info.uts_ns = -1
-                
+
                 # get ipc namespace
                 try:
                     info.ipc_ns = nsproxy.get_ipc_ns().get_inum()
@@ -154,35 +156,36 @@ class PsList(interfaces.plugins.PluginInterface):
                     info.mnt_ns = nsproxy.get_mnt_ns().get_inum()
                 except (AttributeError, exceptions.PagedInvalidAddressException):
                     info.mnt_ns = -1
-                
+
                 # get net namespace
                 try:
                     info.net_ns = nsproxy.get_net_ns().get_inum()
                 except (AttributeError, exceptions.PagedInvalidAddressException):
                     info.net_ns = -1
-                
+
                 # get pid namespace
                 try:
                     info.pid_ns = task.get_pid_ns().get_inum()
                 except (AttributeError, exceptions.PagedInvalidAddressException):
                     info.pid_ns = -1
-                
+
                 # get user namespace
                 try:
                     info.user_ns = nsproxy.get_user_ns().get_inum()
                 except (AttributeError, exceptions.PagedInvalidAddressException):
                     info.user_ns = -1
-                
+
                 # get pid from within the namespace
                 try:
                     info.pid_in_ns = task.get_namespace_pid()
                 except (AttributeError, exceptions.PagedInvalidAddressException):
                     info.pid_in_ns = -1
-            
+
             # no task -> nsproxy
             else:
-                vollog.error('Unable to extract namespace information (no task -> nsproxy member)')
-        
+                vollog.error(
+                    'Unable to extract namespace information (no task -> nsproxy member)')
+
         # extract credentials and capability information
         if credinfo:
             cred = task.cred.dereference()
@@ -242,8 +245,9 @@ class PsList(interfaces.plugins.PluginInterface):
 
         for task in self.list_tasks(self.context,
                                     self.config['kernel'],
-                                    filter_func = self.create_pid_filter(self.config.get('pid', None))):
-            taskinfo = self.get_task_info(self.context, self.config['kernel'], task, boot_time=boot_time, nsinfo=nsinfo, credinfo=credinfo)
+                                    filter_func=self.create_pid_filter(self.config.get('pid', None))):
+            taskinfo = self.get_task_info(
+                self.context, self.config['kernel'], task, boot_time=boot_time, nsinfo=nsinfo, credinfo=credinfo)
             yield (0, taskinfo.tuple(nsinfo=nsinfo, credinfo=credinfo))
 
     @classmethod
@@ -263,7 +267,7 @@ class PsList(interfaces.plugins.PluginInterface):
         """
         vmlinux = context.modules[vmlinux_module_name]
 
-        init_task = vmlinux.object_from_symbol(symbol_name = "init_task")
+        init_task = vmlinux.object_from_symbol(symbol_name="init_task")
 
         # Note that the init_task itself is not yielded, since "ps" also never shows it.
         for task in init_task.tasks:
@@ -271,7 +275,8 @@ class PsList(interfaces.plugins.PluginInterface):
                 yield task
 
     def run(self):
-        columns = [('PID', int), ('PPID', int), ('COMM', str), ('Start Time (UTC)', str)]
+        columns = [('PID', int), ('PPID', int),
+                   ('COMM', str), ('Start Time (UTC)', str)]
 
         if self.config.get('nsinfo', False):
             columns.extend([('PID in NS', int), ('UTS NS', int), ('IPC NS', int),
