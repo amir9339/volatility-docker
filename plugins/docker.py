@@ -238,7 +238,7 @@ class Ps():
                 # Extract container_id from absolute path
                 container_id = splitted_path[-1]
                 return container_id
-        
+
         # No cgroup mount with an absolute path, this can happen if cgroup v2 is used.
         # Instead, search for the mounted /etc/hostname, /etc/hosts or /etc/resolv.conf
         # Iterate each mount in mounts list
@@ -253,7 +253,7 @@ class Ps():
                     # Extract container_id from absolute path
                     container_id = splitted_path[-2]
                     return container_id
-        
+
         # No container id found
         return ""
 
